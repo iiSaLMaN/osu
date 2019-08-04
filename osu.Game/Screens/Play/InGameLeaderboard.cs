@@ -1,20 +1,31 @@
 ﻿// Copyright (c) ppy Pty Ltd <contact@ppy.sh>. Licensed under the MIT Licence.
 // See the LICENCE file in the repository root for full licence text.
 
+using System.Collections.Generic;
+using System.Linq;
 using osu.Framework.Bindables;
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Containers;
+using osu.Game.Online.Leaderboards;
+using osu.Game.Scoring;
 using osu.Game.Users;
 
 namespace osu.Game.Screens.Play
 {
     public class InGameLeaderboard : CompositeDrawable
     {
-        protected readonly InGameScoreContainer ScoresContainer;
+        /// <summary>
+        /// Whether this in-game leaderboard has scores.
+        /// </summary>
+        public bool HasScores => leaderboard != null && leaderboard.Scores.Any();
 
         public readonly BindableDouble PlayerCurrentScore = new BindableDouble();
 
-        private bool playerItemCreated;
+        protected readonly InGameScoreContainer ScoresContainer;
+        protected InGameScoreItem PlayerScoreItem;
+
+        private bool isRealTime;
+
         private User playerUser;
 
         public User PlayerUser
@@ -24,11 +35,32 @@ namespace osu.Game.Screens.Play
             {
                 playerUser = value;
 
-                if (playerItemCreated)
+                if (PlayerScoreItem == null)
+                    PlayerScoreItem = ScoresContainer.AddRealTimePlayer(PlayerCurrentScore, playerUser);
+            }
+        }
+
+        private ILeaderboard leaderboard;
+
+        public ILeaderboard Leaderboard
+        {
+            get => leaderboard;
+            set
+            {
+                leaderboard = value;
+
+                if (leaderboard == null)
                     return;
 
-                ScoresContainer.AddRealTimePlayer(PlayerCurrentScore, playerUser);
-                playerItemCreated = true;
+                ClearScores();
+
+                // todo: isRealTime should have an actual value once real-time leaderboards are supported
+                isRealTime = false;
+
+                ScoresContainer.DeclareNewPosition = (!leaderboard.IsOnlineScope || (leaderboard.Scores?.Count() ?? 0) < 50) || isRealTime;
+
+                if (!isRealTime)
+                    addLeaderboardScores();
             }
         }
 
@@ -36,7 +68,38 @@ namespace osu.Game.Screens.Play
         {
             AutoSizeAxes = Axes.Y;
 
-            InternalChild = ScoresContainer = new InGameScoreContainer();
+            InternalChild = ScoresContainer = new InGameScoreContainer
+            {
+                OnScoreChange = updateLeaderboard
+            };
+        }
+
+        protected void ClearScores() => ScoresContainer.RemoveAll(s => s != PlayerScoreItem);
+
+        private List<ScoreInfo> leaderboardScores;
+
+        /// <summary>
+        /// Number of score items to show between a gap.
+        /// </summary>
+        private const int scores_between_gap = 3;
+
+        private void addLeaderboardScores()
+        {
+            leaderboardScores = leaderboard.Scores.OrderByDescending(s => s.TotalScore).ToList();
+
+            for (int i = 0; i < leaderboardScores.Count; i++)
+            {
+                if (i >= scores_between_gap && i < leaderboardScores.Count - scores_between_gap)
+                    i = leaderboardScores.Count - scores_between_gap;
+
+                ScoresContainer.AddScore(leaderboardScores[i], i + 1);
+            }
+
+            PlayerScoreItem.OnScoreChange.Invoke();
+        }
+
+        private void updateLeaderboard()
+        {
         }
     }
 }
