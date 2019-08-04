@@ -35,11 +35,11 @@ namespace osu.Game.Tests.Visual.Gameplay
                 Origin = Anchor.Centre,
                 Scale = new Vector2(2),
                 RelativeSizeAxes = Axes.X,
-                PlayerCurrentScore = { BindTarget = playerScore = new BindableDouble(1222333) }
+                PlayerCurrentScore = { BindTarget = playerScore = new BindableDouble(1000000) }
             });
 
             AddStep("add player user", () => leaderboard.PlayerUser = new User { Username = "You" });
-            AddSliderStep("set player score", 50, 5000000, 1222333, v => playerScore.Value = v);
+            AddSliderStep("set player score", 50, 52000000, 1000000, v => playerScore.Value = v);
         }
 
         [SetUp]
@@ -47,7 +47,7 @@ namespace osu.Game.Tests.Visual.Gameplay
         {
             leaderboard.ClearScores();
             leaderboard.PlayerPosition = 1;
-            playerScore.Value = 1222333;
+            playerScore.Value = 1000000;
         }
 
         [Test]
@@ -59,6 +59,7 @@ namespace osu.Game.Tests.Visual.Gameplay
             AddStep("add player 2", () => leaderboard.AddDummyPlayer(player2Score, "Player 2"));
             AddStep("add player 3", () => leaderboard.AddDummyPlayer(player3Score, "Player 3"));
 
+            AddStep("set score between player 2 and 3", () => playerScore.Value = 1222333);
             AddAssert("is player 2 position #1", () => leaderboard.CheckPositionByUsername("Player 2", 1));
             AddAssert("is player position #2", () => leaderboard.CheckPositionByUsername("You", 2));
             AddAssert("is player 3 position #3", () => leaderboard.CheckPositionByUsername("Player 3", 3));
