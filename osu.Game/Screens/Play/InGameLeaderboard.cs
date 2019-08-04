@@ -98,8 +98,52 @@ namespace osu.Game.Screens.Play
             PlayerScoreItem.OnScoreChange.Invoke();
         }
 
+        private const int default_maximum_scores = scores_between_gap * 2 + 1;
+
+        private void checkScrollUp()
+        {
+            var orderedScores = ScoresContainer.OrderByDescending(s => s.ScorePosition.HasValue).ThenBy(s => s.ScorePosition).ToList();
+            var bottomPosition = orderedScores[scores_between_gap].ScorePosition ?? 0;
+
+            if (bottomPosition <= 0)
+                return;
+
+            while (bottomPosition != scores_between_gap + 1 && PlayerScoreItem.ScorePosition - bottomPosition < scores_between_gap)
+                ScoresContainer.AddScore(leaderboardScores[bottomPosition - 2], --bottomPosition);
+
+            if (ScoresContainer.Count > default_maximum_scores)
+                ScoresContainer.RemoveRange(ScoresContainer.OrderByDescending(s => s.ScorePosition.HasValue).ThenBy(s => s.ScorePosition).Skip(default_maximum_scores));
+        }
+
+        private void checkScrollDown()
+        {
+            var playerPosition = PlayerScoreItem.ScorePosition ?? 0;
+
+            if (playerPosition <= 0 || playerPosition > leaderboardScores.Count)
+                return;
+
+            var bottomScore = leaderboardScores[playerPosition - 1];
+            while (playerPosition <= leaderboardScores.Count && bottomScore.TotalScore >= PlayerScoreItem.TotalScore)
+                ScoresContainer.AddScore(bottomScore = leaderboardScores[playerPosition - 1], playerPosition++);
+
+            if (ScoresContainer.Count > default_maximum_scores)
+            {
+                ScoresContainer.RemoveRange(ScoresContainer.OrderByDescending(s => s.ScorePosition.HasValue).ThenBy(s => s.ScorePosition).Skip(scores_between_gap).Take(ScoresContainer.Count - default_maximum_scores));
+
+                // it's possible for the player to climb one score item above, check if need to scroll up again.
+                checkScrollUp();
+            }
+        }
+
         private void updateLeaderboard()
         {
+            if (isRealTime || leaderboardScores == null || ScoresContainer.Count < default_maximum_scores)
+                return;
+
+            checkScrollUp();
+            checkScrollDown();
+
+            ScoresContainer.DeclareNewPosition = PlayerScoreItem.ScorePosition <= leaderboardScores.Count;
         }
     }
 }
