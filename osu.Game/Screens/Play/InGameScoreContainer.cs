@@ -77,8 +77,6 @@ namespace osu.Game.Screens.Play
             };
 
             Add(scoreItem);
-            SetLayoutPosition(scoreItem, position ?? maxPosition + 1);
-
             reorderPositions();
 
             return scoreItem;
