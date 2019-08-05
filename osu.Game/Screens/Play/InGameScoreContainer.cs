@@ -36,7 +36,7 @@ namespace osu.Game.Screens.Play
             AutoSizeAxes = Axes.Y;
             Direction = FillDirection.Vertical;
             Spacing = new Vector2(2.5f);
-            LayoutDuration = 500;
+            LayoutDuration = 1000;
             LayoutEasing = Easing.OutQuint;
         }
 
