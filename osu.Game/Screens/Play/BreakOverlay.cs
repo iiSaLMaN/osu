@@ -2,7 +2,9 @@
 // See the LICENCE file in the repository root for full licence text.
 
 using System.Collections.Generic;
+using System.Linq;
 using osu.Framework.Allocation;
+using osu.Framework.Bindables;
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Containers;
 using osu.Framework.Graphics.Shapes;
@@ -29,11 +31,25 @@ namespace osu.Game.Screens.Play
             set
             {
                 breaks = value;
+
+                // reset index in case the new breaks list is smaller than last one
+                isBreakTime.Value = false;
+                CurrentBreakIndex = 0;
+
                 initializeBreaks();
             }
         }
 
         public override bool RemoveCompletedTransforms => false;
+
+        /// <summary>
+        /// Whether the gameplay is currently in a break.
+        /// </summary>
+        public IBindable<bool> IsBreakTime => isBreakTime;
+
+        protected int CurrentBreakIndex;
+
+        private readonly BindableBool isBreakTime = new BindableBool();
 
         private readonly Container remainingTimeAdjustmentBox;
         private readonly Container remainingTimeBox;
@@ -107,6 +123,37 @@ namespace osu.Game.Screens.Play
         {
             base.LoadComplete();
             initializeBreaks();
+        }
+
+        protected override void Update()
+        {
+            base.Update();
+            updateBreakTimeBindable();
+        }
+
+        private void updateBreakTimeBindable()
+        {
+            if (breaks?.Any() != true)
+                return;
+
+            var time = Clock.CurrentTime;
+
+            if (time > breaks[CurrentBreakIndex].EndTime)
+            {
+                while (time > breaks[CurrentBreakIndex].EndTime && CurrentBreakIndex < breaks.Count - 1)
+                    CurrentBreakIndex++;
+            }
+            else
+            {
+                while (time < breaks[CurrentBreakIndex].StartTime && CurrentBreakIndex > 0)
+                    CurrentBreakIndex--;
+            }
+
+            // This ensures that IsBreakTime is generally consistent with the overlay's transforms during a break.
+            // If the current break doesn't have effects, IsBreakTime should be false.
+            // We also assume that the overlay's fade out transform is "not break time".
+            var currentBreak = breaks[CurrentBreakIndex];
+            isBreakTime.Value = currentBreak.HasEffect && time >= currentBreak.StartTime && time <= currentBreak.EndTime - fade_duration;
         }
 
         private void initializeBreaks()
