@@ -17,7 +17,7 @@ namespace osu.Game.Screens.Play
         /// <summary>
         /// Whether this in-game leaderboard has scores.
         /// </summary>
-        public bool HasScores => leaderboard != null && leaderboard.Scores.Any();
+        public bool HasScores => leaderboard?.Scores != null && leaderboard?.Scores.Count() > 1;
 
         public readonly BindableDouble PlayerCurrentScore = new BindableDouble();
 
@@ -85,7 +85,10 @@ namespace osu.Game.Screens.Play
 
         private void addLeaderboardScores()
         {
-            leaderboardScores = leaderboard.Scores.OrderByDescending(s => s.TotalScore).ToList();
+            leaderboardScores = leaderboard?.Scores?.OrderByDescending(s => s.TotalScore).ToList();
+
+            if (leaderboardScores == null)
+                return;
 
             for (int i = 0; i < leaderboardScores.Count; i++)
             {
@@ -95,7 +98,7 @@ namespace osu.Game.Screens.Play
                 ScoresContainer.AddScore(leaderboardScores[i], i + 1);
             }
 
-            PlayerScoreItem.OnScoreChange.Invoke();
+            //PlayerScoreItem?.OnScoreChange.Invoke();
         }
 
         private const int default_maximum_scores = scores_between_gap * 2 + 1;

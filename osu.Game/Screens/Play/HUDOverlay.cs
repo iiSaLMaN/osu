@@ -9,6 +9,8 @@ using osu.Framework.Graphics;
 using osu.Framework.Graphics.Containers;
 using osu.Framework.Input.Events;
 using osu.Game.Configuration;
+using osu.Game.Graphics;
+using osu.Game.Graphics.Sprites;
 using osu.Game.Graphics.UserInterface;
 using osu.Game.Overlays;
 using osu.Game.Overlays.Notifications;
@@ -35,12 +37,17 @@ namespace osu.Game.Screens.Play
         public readonly ModDisplay ModDisplay;
         public readonly HoldForMenuButton HoldToQuit;
         public readonly PlayerSettingsOverlay PlayerSettingsOverlay;
+        public readonly InGameLeaderboard InGameLeaderboard;
 
         public Bindable<bool> ShowHealthbar = new Bindable<bool>(true);
+        public readonly IBindable<bool> IsBreakTime = new BindableBool();
 
         private readonly ScoreProcessor scoreProcessor;
         private readonly DrawableRuleset drawableRuleset;
         private readonly IReadOnlyList<Mod> mods;
+
+        private Bindable<bool> alwaysShowLeaderboard;
+        private readonly OsuSpriteText leaderboardVisibilityText;
 
         private Bindable<bool> showHud;
         private readonly Container visibilityContainer;
@@ -99,9 +106,32 @@ namespace osu.Game.Screens.Play
                         KeyCounter = CreateKeyCounter(),
                         HoldToQuit = CreateHoldForMenuButton(),
                     }
+                },
+                new FillFlowContainer
+                {
+                    Anchor = Anchor.BottomLeft,
+                    Origin = Anchor.BottomLeft,
+                    Position = -new Vector2(5, TwoLayerButton.SIZE_RETRACTED.Y),
+                    AutoSizeAxes = Axes.Both,
+                    Direction = FillDirection.Vertical,
+                    Margin = new MarginPadding { Bottom = 30, Left = 20 },
+                    Children = new Drawable[]
+                    {
+                        InGameLeaderboard = CreateInGameLeaderboard(),
+                        leaderboardVisibilityText = new OsuSpriteText
+                        {
+                            Anchor = Anchor.BottomLeft,
+                            Origin = Anchor.BottomLeft,
+                            Margin = new MarginPadding { Left = 20 },
+                            Font = OsuFont.Default.With(weight: FontWeight.Bold),
+                            Alpha = 0,
+                        }
+                    }
                 }
             };
         }
+
+        private void updateLeaderboardVisibility() => InGameLeaderboard.FadeTo(IsBreakTime.Value ? 1 : 0, duration, easing);
 
         [BackgroundDependencyLoader(true)]
         private void load(OsuConfigManager config, NotificationOverlay notificationOverlay)
@@ -118,6 +148,29 @@ namespace osu.Game.Screens.Play
 
             showHud = config.GetBindable<bool>(OsuSetting.ShowInterface);
             showHud.BindValueChanged(visible => visibilityContainer.FadeTo(visible.NewValue ? 1 : 0, duration, easing), true);
+
+            IsBreakTime.BindValueChanged(_ => updateLeaderboardVisibility(), true);
+
+            alwaysShowLeaderboard = config.GetBindable<bool>(OsuSetting.AlwaysShowInGameLeaderboard);
+            alwaysShowLeaderboard.ValueChanged += alwaysShow =>
+            {
+                if (!InGameLeaderboard.HasScores)
+                    return;
+
+                if (alwaysShow.NewValue)
+                    InGameLeaderboard.FadeIn(duration, easing);
+                else
+                    updateLeaderboardVisibility();
+
+                if (IsBreakTime.Value)
+                {
+                    leaderboardVisibilityText.Text = alwaysShow.NewValue
+                        ? "The scoreboard will be shown at all times!"
+                        : "The scoreboard will be hidden after this break ends!";
+
+                    leaderboardVisibilityText.FadeOutFromOne(1000, Easing.InQuint);
+                }
+            };
 
             ShowHealthbar.BindValueChanged(healthBar =>
             {
@@ -149,6 +202,15 @@ namespace osu.Game.Screens.Play
             base.LoadComplete();
 
             replayLoaded.BindValueChanged(replayLoadedValueChanged, true);
+
+            if (InGameLeaderboard.HasScores)
+            {
+                leaderboardVisibilityText.Text = "Hit <TAB> to toggle scoreboard!";
+                leaderboardVisibilityText.FadeOutFromOne(2000, Easing.InQuint);
+
+                if (!alwaysShowLeaderboard.Value)
+                    InGameLeaderboard.FadeOut(2000, Easing.InQuint);
+            }
         }
 
         private void replayLoadedValueChanged(ValueChangedEvent<bool> e)
@@ -182,13 +244,17 @@ namespace osu.Game.Screens.Play
         {
             if (e.Repeat) return false;
 
-            if (e.ShiftPressed)
+            if (e.Key == Key.Tab)
             {
-                switch (e.Key)
+                if (e.ShiftPressed)
                 {
-                    case Key.Tab:
-                        showHud.Value = !showHud.Value;
-                        return true;
+                    showHud.Value = !showHud.Value;
+                    return true;
+                }
+                else if (!e.ControlPressed && !e.AltPressed)
+                {
+                    alwaysShowLeaderboard.Value = !alwaysShowLeaderboard.Value;
+                    return true;
                 }
             }
 
@@ -258,12 +324,21 @@ namespace osu.Game.Screens.Play
 
         protected virtual PlayerSettingsOverlay CreatePlayerSettingsOverlay() => new PlayerSettingsOverlay();
 
+        protected virtual InGameLeaderboard CreateInGameLeaderboard() => new InGameLeaderboard
+        {
+            Anchor = Anchor.BottomLeft,
+            Origin = Anchor.BottomLeft,
+            Width = 80,
+        };
+
         protected virtual void BindProcessor(ScoreProcessor processor)
         {
             ScoreCounter?.Current.BindTo(processor.TotalScore);
             AccuracyCounter?.Current.BindTo(processor.Accuracy);
             ComboCounter?.Current.BindTo(processor.Combo);
             HealthDisplay?.Current.BindTo(processor.Health);
+
+            InGameLeaderboard?.PlayerCurrentScore.BindTo(processor.TotalScore);
 
             if (HealthDisplay is StandardHealthDisplay shd)
                 processor.NewJudgement += shd.Flash;

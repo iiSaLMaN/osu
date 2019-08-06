@@ -18,6 +18,7 @@ using osu.Game.Beatmaps;
 using osu.Game.Configuration;
 using osu.Game.Graphics.Containers;
 using osu.Game.Online.API;
+using osu.Game.Online.Leaderboards;
 using osu.Game.Overlays;
 using osu.Game.Rulesets;
 using osu.Game.Rulesets.Mods;
@@ -71,6 +72,23 @@ namespace osu.Game.Screens.Play
 
         protected HUDOverlay HUDOverlay { get; private set; }
 
+        private ILeaderboard leaderboard;
+
+        /// <summary>
+        /// Assigns a leaderboard for use inside <see cref="InGameLeaderboard"/>.
+        /// </summary>
+        public ILeaderboard Leaderboard
+        {
+            get => leaderboard;
+            set
+            {
+                leaderboard = value;
+
+                if (HUDOverlay != null)
+                    HUDOverlay.InGameLeaderboard.Leaderboard = leaderboard;
+            }
+        }
+
         public bool LoadedBeatmapSuccessfully => DrawableRuleset?.Objects.Any() == true;
 
         protected GameplayClockContainer GameplayClockContainer { get; private set; }
@@ -117,6 +135,8 @@ namespace osu.Game.Screens.Play
             if (!ScoreProcessor.Mode.Disabled)
                 config.BindWith(OsuSetting.ScoreDisplayMode, ScoreProcessor.Mode);
 
+            BreakOverlay breakOverlay;
+
             InternalChild = GameplayClockContainer = new GameplayClockContainer(working, Mods.Value, DrawableRuleset.GameplayStartTime);
 
             GameplayClockContainer.Children = new[]
@@ -134,7 +154,7 @@ namespace osu.Game.Screens.Play
                         }
                     }
                 },
-                new BreakOverlay(working.Beatmap.BeatmapInfo.LetterboxInBreaks, ScoreProcessor)
+                breakOverlay = new BreakOverlay(working.Beatmap.BeatmapInfo.LetterboxInBreaks, ScoreProcessor)
                 {
                     Anchor = Anchor.Centre,
                     Origin = Anchor.Centre,
@@ -151,6 +171,7 @@ namespace osu.Game.Screens.Play
                     },
                     PlayerSettingsOverlay = { PlaybackSettings = { UserPlaybackRate = { BindTarget = GameplayClockContainer.UserPlaybackRate } } },
                     KeyCounter = { Visible = { BindTarget = DrawableRuleset.HasReplayLoaded } },
+                    InGameLeaderboard = { Leaderboard = leaderboard },
                     RequestSeek = GameplayClockContainer.Seek,
                     Anchor = Anchor.Centre,
                     Origin = Anchor.Centre
@@ -194,7 +215,13 @@ namespace osu.Game.Screens.Play
                 failAnimation = new FailAnimation(DrawableRuleset) { OnComplete = onFailComplete, }
             };
 
-            DrawableRuleset.HasReplayLoaded.BindValueChanged(e => HUDOverlay.HoldToQuit.PauseOnFocusLost = !e.NewValue && PauseOnFocusLost, true);
+            HUDOverlay.IsBreakTime.BindTo(breakOverlay.IsBreakTime);
+
+            DrawableRuleset.HasReplayLoaded.BindValueChanged(e =>
+            {
+                HUDOverlay.HoldToQuit.PauseOnFocusLost = !e.NewValue && PauseOnFocusLost;
+                HUDOverlay.InGameLeaderboard.PlayerUser = DrawableRuleset.ReplayScore?.ScoreInfo.User ?? api.LocalUser.Value;
+            }, true);
 
             // bind clock into components that require it
             DrawableRuleset.IsPaused.BindTo(GameplayClockContainer.IsPaused);
