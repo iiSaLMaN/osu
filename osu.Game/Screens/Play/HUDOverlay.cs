@@ -131,7 +131,11 @@ namespace osu.Game.Screens.Play
             };
         }
 
-        private void updateLeaderboardVisibility() => InGameLeaderboard.FadeTo(IsBreakTime.Value ? 1 : 0, duration, easing);
+        private void updateLeaderboardVisibility()
+        {
+            if (!alwaysShowLeaderboard.Value)
+                InGameLeaderboard.FadeTo(IsBreakTime.Value ? 1 : 0, duration, easing);
+        }
 
         [BackgroundDependencyLoader(true)]
         private void load(OsuConfigManager config, NotificationOverlay notificationOverlay)
