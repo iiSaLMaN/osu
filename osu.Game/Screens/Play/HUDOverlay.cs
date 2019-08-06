@@ -153,7 +153,7 @@ namespace osu.Game.Screens.Play
             showHud = config.GetBindable<bool>(OsuSetting.ShowInterface);
             showHud.BindValueChanged(visible => visibilityContainer.FadeTo(visible.NewValue ? 1 : 0, duration, easing), true);
 
-            IsBreakTime.BindValueChanged(_ => updateLeaderboardVisibility(), true);
+            IsBreakTime.ValueChanged += _ => updateLeaderboardVisibility();
 
             alwaysShowLeaderboard = config.GetBindable<bool>(OsuSetting.AlwaysShowInGameLeaderboard);
             alwaysShowLeaderboard.ValueChanged += alwaysShow =>
