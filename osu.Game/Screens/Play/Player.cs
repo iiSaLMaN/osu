@@ -16,7 +16,6 @@ using osu.Framework.Screens;
 using osu.Framework.Threading;
 using osu.Game.Beatmaps;
 using osu.Game.Configuration;
-using osu.Game.Graphics.Containers;
 using osu.Game.Online.API;
 using osu.Game.Overlays;
 using osu.Game.Rulesets;
@@ -193,9 +192,8 @@ namespace osu.Game.Screens.Play
 
             // load the skinning hierarchy first.
             // this is intentionally done in two stages to ensure things are in a loaded state before exposing the ruleset to skin sources.
-            target.Add(new ScalingContainer(ScalingMode.Gameplay)
-                .WithChild(beatmapSkinProvider
-                    .WithChild(target = rulesetSkinProvider)));
+            target.Add(beatmapSkinProvider
+                .WithChild(target = rulesetSkinProvider));
 
             target.AddRange(new Drawable[]
             {

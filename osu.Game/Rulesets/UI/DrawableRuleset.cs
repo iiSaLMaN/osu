@@ -26,6 +26,7 @@ using osu.Framework.Input;
 using osu.Framework.Input.Events;
 using osu.Framework.IO.Stores;
 using osu.Game.Configuration;
+using osu.Game.Graphics.Containers;
 using osu.Game.Graphics.Cursor;
 using osu.Game.Input.Handlers;
 using osu.Game.Overlays;
@@ -187,9 +188,9 @@ namespace osu.Game.Rulesets.UI
                     Children = new Drawable[]
                     {
                         KeyBindingInputManager
-                            .WithChild(CreatePlayfieldAdjustmentContainer()
-                                .WithChild(Playfield)
-                            ),
+                            .WithChild(new ScalingContainer(ScalingMode.Gameplay)
+                                .WithChild(CreatePlayfieldAdjustmentContainer()
+                                    .WithChild(Playfield))),
                         overlays = new Container { RelativeSizeAxes = Axes.Both }
                     }
                 },
@@ -198,8 +199,9 @@ namespace osu.Game.Rulesets.UI
             if ((ResumeOverlay = CreateResumeOverlay()) != null)
             {
                 AddInternal(CreateInputManager()
-                    .WithChild(CreatePlayfieldAdjustmentContainer()
-                        .WithChild(ResumeOverlay)));
+                    .WithChild(new ScalingContainer(ScalingMode.Gameplay)
+                        .WithChild(CreatePlayfieldAdjustmentContainer()
+                            .WithChild(ResumeOverlay))));
             }
 
             applyRulesetMods(mods, config);
