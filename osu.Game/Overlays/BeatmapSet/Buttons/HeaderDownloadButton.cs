@@ -1,12 +1,14 @@
 ﻿// Copyright (c) ppy Pty Ltd <contact@ppy.sh>. Licensed under the MIT Licence.
 // See the LICENCE file in the repository root for full licence text.
 
+using System;
 using osu.Framework.Allocation;
 using osu.Framework.Bindables;
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Containers;
 using osu.Framework.Graphics.Cursor;
 using osu.Framework.Graphics.Sprites;
+using osu.Framework.Input.Events;
 using osu.Game.Beatmaps;
 using osu.Game.Graphics;
 using osu.Game.Graphics.Containers;
@@ -40,11 +42,13 @@ namespace osu.Game.Overlays.BeatmapSet.Buttons
             RelativeSizeAxes = Axes.Y;
         }
 
-        [BackgroundDependencyLoader]
-        private void load(IAPIProvider api, BeatmapManager beatmaps)
-        {
-            FillFlowContainer textSprites;
+        private FillFlowContainer textSprites;
+        private DownloadProgressBar progressBar;
+        private SpriteIcon icon1, icon2;
 
+        [BackgroundDependencyLoader(true)]
+        private void load(IAPIProvider api, BeatmapManager beatmaps, DialogOverlay dialogOverlay)
+        {
             AddRangeInternal(new Drawable[]
             {
                 shakeContainer = new ShakeContainer
@@ -64,28 +68,42 @@ namespace osu.Game.Overlays.BeatmapSet.Buttons
                             RelativeSizeAxes = Axes.Both,
                             Children = new Drawable[]
                             {
-                                textSprites = new FillFlowContainer
+                                textSprites = new TestFillFlowContainer
                                 {
                                     Depth = -1,
                                     Anchor = Anchor.CentreLeft,
                                     Origin = Anchor.CentreLeft,
                                     AutoSizeAxes = Axes.Both,
-                                    AutoSizeDuration = 500,
-                                    AutoSizeEasing = Easing.OutQuint,
                                     Direction = FillDirection.Vertical,
                                 },
-                                new SpriteIcon
+                                new Container
                                 {
-                                    Depth = -1,
+                                    Origin = Anchor.Centre,
                                     Anchor = Anchor.CentreRight,
-                                    Origin = Anchor.CentreRight,
-                                    Icon = FontAwesome.Solid.Download,
-                                    Size = new Vector2(16),
-                                    Margin = new MarginPadding { Right = 5 },
-                                },
+                                    AutoSizeAxes = Axes.Both,
+                                    Padding = new MarginPadding { Right = 25 },
+                                    Children = new[]
+                                    {
+                                        icon1 = new SpriteIcon
+                                        {
+                                            Anchor = Anchor.Centre,
+                                            Origin = Anchor.Centre,
+                                            Icon = FontAwesome.Solid.Download,
+                                            Size = new Vector2(16),
+                                        },
+                                        icon2 = new SpriteIcon
+                                        {
+                                            X = 8,
+                                            Anchor = Anchor.Centre,
+                                            Origin = Anchor.Centre,
+                                            Icon = FontAwesome.Solid.TimesCircle,
+                                            Size = Vector2.Zero,
+                                        }
+                                    }
+                                }
                             }
                         },
-                        new DownloadProgressBar(BeatmapSet.Value)
+                        progressBar = new DownloadProgressBar(BeatmapSet.Value)
                         {
                             Depth = -2,
                             Anchor = Anchor.BottomLeft,
@@ -97,71 +115,71 @@ namespace osu.Game.Overlays.BeatmapSet.Buttons
 
             button.Action = () =>
             {
-                if (State.Value != DownloadState.NotDownloaded)
+                switch (State.Value)
                 {
-                    shakeContainer.Shake();
-                    return;
-                }
+                    case DownloadState.NotDownloaded:
+                        beatmaps.Download(BeatmapSet.Value, noVideo);
+                        break;
 
-                beatmaps.Download(BeatmapSet.Value, noVideo);
+                    case DownloadState.Downloading:
+                        dialogOverlay?.Push(new BeatmapDownloadCancelDialog(BeatmapSet.Value));
+                        break;
+
+                    default:
+                        shakeContainer.Shake();
+                        break;
+                }
             };
 
             localUser.BindTo(api.LocalUser);
             localUser.BindValueChanged(userChanged, true);
             button.Enabled.BindValueChanged(enabledChanged, true);
 
-            State.BindValueChanged(state =>
+            State.BindValueChanged(_ => updateState(), true);
+        }
+
+        protected override bool OnHover(HoverEvent e)
+        {
+            updateState();
+            return base.OnHover(e);
+        }
+
+        protected override void OnHoverLost(HoverLostEvent e)
+        {
+            updateState();
+            base.OnHoverLost(e);
+        }
+
+        private OsuSpriteText downloadingText;
+
+        private void updateState()
+        {
+            switch (State.Value)
             {
-                switch (state.NewValue)
-                {
-                    case DownloadState.Downloading:
-                        textSprites.Children = new Drawable[]
-                        {
-                            new OsuSpriteText
-                            {
-                                Text = "Downloading...",
-                                Font = OsuFont.GetFont(size: 13, weight: FontWeight.Bold)
-                            },
-                        };
-                        break;
+                case DownloadState.Downloading:
+                    textSprites.Child = downloadingText = new OsuSpriteText { Text = IsHovered ? "Cancel download" : "Downloading...", Font = OsuFont.GetFont(size: 13, weight: FontWeight.Bold) };
+                    break;
 
-                    case DownloadState.Downloaded:
-                        textSprites.Children = new Drawable[]
-                        {
-                            new OsuSpriteText
-                            {
-                                Text = "Importing...",
-                                Font = OsuFont.GetFont(size: 13, weight: FontWeight.Bold)
-                            },
-                        };
-                        break;
+                case DownloadState.LocallyAvailable:
+                    this.FadeOut(200);
+                    break;
 
-                    case DownloadState.LocallyAvailable:
-                        this.FadeOut(200);
-                        break;
-
-                    case DownloadState.NotDownloaded:
-                        textSprites.Children = new Drawable[]
-                        {
-                            new OsuSpriteText
-                            {
-                                Text = "Download",
-                                Font = OsuFont.GetFont(size: 13, weight: FontWeight.Bold)
-                            },
-                            new OsuSpriteText
-                            {
-                                Text = BeatmapSet.Value.OnlineInfo.HasVideo && noVideo ? "without Video" : string.Empty,
-                                Font = OsuFont.GetFont(size: 11, weight: FontWeight.Bold)
-                            },
-                        };
-                        this.FadeIn(200);
-                        break;
-                }
-            }, true);
+                case DownloadState.NotDownloaded:
+                    this.FadeIn(200);
+                    break;
+            }
         }
 
         private void userChanged(ValueChangedEvent<User> e) => button.Enabled.Value = !(e.NewValue is GuestUser);
 
         private void enabledChanged(ValueChangedEvent<bool> e) => this.FadeColour(e.NewValue ? Color4.White : Color4.Gray, 200, Easing.OutQuint);
+
+        private class TestFillFlowContainer : FillFlowContainer
+        {
+            protected override void Dispose(bool isDisposing)
+            {
+                base.Dispose(isDisposing);
+            }
+        }
     }
 }

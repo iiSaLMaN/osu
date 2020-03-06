@@ -64,7 +64,7 @@ namespace osu.Game.Tests.Visual.Online
         [Test]
         public void TestOnline()
         {
-            AddStep(@"show online", () => overlay.FetchAndShowBeatmapSet(55));
+            AddStep(@"show online", () => overlay.FetchAndShowBeatmapSet(12345));
         }
 
         [Test]
