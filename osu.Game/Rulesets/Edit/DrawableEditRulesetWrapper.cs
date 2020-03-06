@@ -36,7 +36,6 @@ namespace osu.Game.Rulesets.Edit
         [BackgroundDependencyLoader]
         private void load()
         {
-            drawableRuleset.FrameStablePlayback = false;
             Playfield.DisplayJudgements.Value = false;
         }
 

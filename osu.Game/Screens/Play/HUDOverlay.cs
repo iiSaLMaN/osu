@@ -40,6 +40,7 @@ namespace osu.Game.Screens.Play
 
         public Bindable<bool> ShowHealthbar = new Bindable<bool>(true);
 
+        private readonly Player player;
         private readonly ScoreProcessor scoreProcessor;
         private readonly HealthProcessor healthProcessor;
         private readonly DrawableRuleset drawableRuleset;
@@ -64,8 +65,9 @@ namespace osu.Game.Screens.Play
 
         private IEnumerable<Drawable> hideTargets => new Drawable[] { visibilityContainer, KeyCounter };
 
-        public HUDOverlay(ScoreProcessor scoreProcessor, HealthProcessor healthProcessor, DrawableRuleset drawableRuleset, IReadOnlyList<Mod> mods)
+        public HUDOverlay(Player player, ScoreProcessor scoreProcessor, HealthProcessor healthProcessor, DrawableRuleset drawableRuleset, IReadOnlyList<Mod> mods)
         {
+            this.player = player;
             this.scoreProcessor = scoreProcessor;
             this.healthProcessor = healthProcessor;
             this.drawableRuleset = drawableRuleset;
@@ -132,7 +134,7 @@ namespace osu.Game.Screens.Play
 
                 Progress.Objects = drawableRuleset.Objects;
                 Progress.RequestSeek = time => RequestSeek(time);
-                Progress.ReferenceClock = drawableRuleset.FrameStableClock;
+                Progress.ReferenceClock = player.FrameStableClock;
             }
 
             ModDisplay.Current.Value = mods;

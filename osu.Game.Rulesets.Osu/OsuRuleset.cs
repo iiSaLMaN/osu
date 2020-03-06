@@ -29,6 +29,7 @@ using osu.Game.Rulesets.Scoring;
 using osu.Game.Scoring;
 using osu.Game.Skinning;
 using System;
+using osu.Game.Screens.Play;
 
 namespace osu.Game.Rulesets.Osu
 {
@@ -180,6 +181,8 @@ namespace osu.Game.Rulesets.Osu
         public override RulesetSettingsSubsection CreateSettings() => new OsuSettingsSubsection(this);
 
         public override ISkin CreateLegacySkinProvider(ISkinSource source) => new OsuLegacySkinTransformer(source);
+
+        public override ResumeOverlay CreateResumeOverlay() => new OsuResumeOverlay();
 
         public int LegacyID => 0;
 

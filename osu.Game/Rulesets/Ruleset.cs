@@ -20,6 +20,7 @@ using osu.Game.Rulesets.Configuration;
 using osu.Game.Rulesets.Difficulty;
 using osu.Game.Rulesets.Scoring;
 using osu.Game.Scoring;
+using osu.Game.Screens.Play;
 using osu.Game.Skinning;
 using osu.Game.Users;
 
@@ -49,6 +50,12 @@ namespace osu.Game.Rulesets
         public ModAutoplay GetAutoplayMod() => GetAllMods().OfType<ModAutoplay>().First();
 
         public virtual ISkin CreateLegacySkinProvider(ISkinSource source) => null;
+
+        /// <summary>
+        /// Creates a <see cref="ResumeOverlay"/> for this <see cref="Ruleset"/>.
+        /// </summary>
+        /// <returns>The <see cref="ResumeOverlay"/>.</returns>
+        public virtual ResumeOverlay CreateResumeOverlay() => null;
 
         protected Ruleset()
         {

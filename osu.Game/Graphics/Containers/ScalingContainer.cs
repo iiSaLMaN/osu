@@ -23,7 +23,7 @@ namespace osu.Game.Graphics.Containers
         private Bindable<float> posX;
         private Bindable<float> posY;
 
-        private readonly ScalingMode? targetMode;
+        public readonly ScalingMode? TargetMode;
 
         private Bindable<ScalingMode> scalingMode;
 
@@ -42,7 +42,7 @@ namespace osu.Game.Graphics.Containers
         /// <param name="targetMode">The mode which this container should be handling. Handles all modes if null.</param>
         public ScalingContainer(ScalingMode? targetMode = null)
         {
-            this.targetMode = targetMode;
+            TargetMode = targetMode;
             RelativeSizeAxes = Axes.Both;
 
             InternalChild = sizableContainer = new AlwaysInputContainer
@@ -116,7 +116,7 @@ namespace osu.Game.Graphics.Containers
         {
             const float fade_time = 500;
 
-            if (targetMode == ScalingMode.Everything)
+            if (TargetMode == ScalingMode.Everything)
             {
                 // the top level scaling container manages the background to be displayed while scaling.
                 if (requiresBackgroundVisible)
@@ -139,7 +139,7 @@ namespace osu.Game.Graphics.Containers
                     backgroundStack?.FadeOut(fade_time);
             }
 
-            bool scaling = targetMode == null || scalingMode.Value == targetMode;
+            bool scaling = TargetMode == null || scalingMode.Value == TargetMode;
 
             var targetSize = scaling ? new Vector2(sizeX.Value, sizeY.Value) : Vector2.One;
             var targetPosition = scaling ? new Vector2(posX.Value, posY.Value) * (Vector2.One - targetSize) : Vector2.Zero;

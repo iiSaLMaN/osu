@@ -16,6 +16,7 @@ using osu.Framework.Screens;
 using osu.Framework.Threading;
 using osu.Game.Beatmaps;
 using osu.Game.Configuration;
+using osu.Game.Graphics.Containers;
 using osu.Game.Online.API;
 using osu.Game.Overlays;
 using osu.Game.Rulesets;
@@ -68,15 +69,21 @@ namespace osu.Game.Screens.Play
 
         private SampleChannel sampleRestart;
 
+        private ResumeOverlay resumeOverlay;
+
         public BreakOverlay BreakOverlay;
 
         protected ScoreProcessor ScoreProcessor { get; private set; }
 
         protected HealthProcessor HealthProcessor { get; private set; }
 
+        protected FrameStabilityContainer FrameStabilityContainer { get; private set; }
+
         protected DrawableRuleset DrawableRuleset { get; private set; }
 
         protected HUDOverlay HUDOverlay { get; private set; }
+
+        protected internal GameplayClock FrameStableClock => FrameStabilityContainer.GameplayClock;
 
         public bool LoadedBeatmapSuccessfully => DrawableRuleset?.Objects.Any() == true;
 
@@ -88,6 +95,19 @@ namespace osu.Game.Screens.Play
         [Cached]
         [Cached(Type = typeof(IBindable<IReadOnlyList<Mod>>))]
         protected new readonly Bindable<IReadOnlyList<Mod>> Mods = new Bindable<IReadOnlyList<Mod>>(Array.Empty<Mod>());
+
+        private bool frameStablePlayback = true;
+
+        internal bool FrameStablePlayback
+        {
+            get => frameStablePlayback;
+            set
+            {
+                frameStablePlayback = value;
+                if (FrameStabilityContainer != null)
+                    FrameStabilityContainer.FrameStablePlayback = value;
+            }
+        }
 
         /// <summary>
         /// Whether failing should be allowed.
@@ -197,9 +217,27 @@ namespace osu.Game.Screens.Play
 
             target.AddRange(new Drawable[]
             {
-                DrawableRuleset,
+                FrameStabilityContainer = new FrameStabilityContainer(DrawableRuleset.GameplayStartTime)
+                {
+                    FrameStablePlayback = FrameStablePlayback,
+                    Child = new ScalingContainer(ScalingMode.Gameplay)
+                    {
+                        Children = new[]
+                        {
+                            DrawableRuleset,
+                        }
+                    },
+                },
                 new ComboEffects(ScoreProcessor)
             });
+
+            if ((resumeOverlay = ruleset.CreateResumeOverlay()) != null)
+            {
+                target.Add(DrawableRuleset.CreateInputManager()
+                                          .WithChild(new ScalingContainer(ScalingMode.Gameplay))
+                                          .WithChild(DrawableRuleset.CreatePlayfieldAdjustmentContainer()
+                                                                    .WithChild(resumeOverlay)));
+            }
         }
 
         private void addOverlayComponents(Container target, WorkingBeatmap working)
@@ -207,9 +245,9 @@ namespace osu.Game.Screens.Play
             target.AddRange(new[]
             {
                 // display the cursor above some HUD elements.
-                DrawableRuleset.Cursor?.CreateProxy() ?? new Container(),
-                DrawableRuleset.ResumeOverlay?.CreateProxy() ?? new Container(),
-                HUDOverlay = new HUDOverlay(ScoreProcessor, HealthProcessor, DrawableRuleset, Mods.Value)
+                DrawableRuleset.Cursor?.CreateProxy() ?? Drawable.Empty(),
+                resumeOverlay?.CreateProxy() ?? Drawable.Empty(),
+                HUDOverlay = new HUDOverlay(this, ScoreProcessor, HealthProcessor, DrawableRuleset, Mods.Value)
                 {
                     HoldToQuit =
                     {
@@ -261,15 +299,17 @@ namespace osu.Game.Screens.Play
                 failAnimation = new FailAnimation(DrawableRuleset) { OnComplete = onFailComplete, }
             });
 
-            DrawableRuleset.Overlays.Add(BreakOverlay = new BreakOverlay(working.Beatmap.BeatmapInfo.LetterboxInBreaks, DrawableRuleset.GameplayStartTime, ScoreProcessor)
+            FrameStabilityContainer.AddRange(new[]
             {
-                Anchor = Anchor.Centre,
-                Origin = Anchor.Centre,
-                Breaks = working.Beatmap.Breaks
+                BreakOverlay = new BreakOverlay(working.Beatmap.BeatmapInfo.LetterboxInBreaks, DrawableRuleset.GameplayStartTime, ScoreProcessor)
+                {
+                    Anchor = Anchor.Centre,
+                    Origin = Anchor.Centre,
+                    Breaks = working.Beatmap.Breaks
+                }, Drawable
+                ScoreProcessor,
+                HealthProcessor,
             });
-
-            DrawableRuleset.Overlays.Add(ScoreProcessor);
-            DrawableRuleset.Overlays.Add(HealthProcessor);
 
             HealthProcessor.IsBreakTime.BindTo(BreakOverlay.IsBreakTime);
         }
@@ -474,7 +514,7 @@ namespace osu.Game.Screens.Play
 
             if (IsResuming)
             {
-                DrawableRuleset.CancelResume();
+                resumeOverlay?.Hide();
                 IsResuming = false;
             }
 
@@ -494,7 +534,16 @@ namespace osu.Game.Screens.Play
             if (BreakOverlay.IsBreakTime.Value)
                 completeResume();
             else
-                DrawableRuleset.RequestResume(completeResume);
+            {
+                if (resumeOverlay != null && (DrawableRuleset.Cursor == null || (DrawableRuleset.Cursor.LastFrameState == Visibility.Visible && Contains(DrawableRuleset.Cursor.ActiveCursor.ScreenSpaceDrawQuad.Centre))))
+                {
+                    resumeOverlay.GameplayCursor = DrawableRuleset.Cursor;
+                    resumeOverlay.ResumeAction = completeResume;
+                    resumeOverlay.Show();
+                }
+                else
+                    completeResume();
+            }
 
             void completeResume()
             {

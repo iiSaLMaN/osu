@@ -26,7 +26,6 @@ using osu.Framework.Input;
 using osu.Framework.Input.Events;
 using osu.Framework.IO.Stores;
 using osu.Game.Configuration;
-using osu.Game.Graphics.Containers;
 using osu.Game.Graphics.Cursor;
 using osu.Game.Input.Handlers;
 using osu.Game.Overlays;
@@ -73,28 +72,6 @@ namespace osu.Game.Rulesets.UI
         /// </summary>
         public override Playfield Playfield => playfield.Value;
 
-        private Container overlays;
-
-        public override Container Overlays => overlays;
-
-        public override GameplayClock FrameStableClock => frameStabilityContainer.GameplayClock;
-
-        private bool frameStablePlayback = true;
-
-        /// <summary>
-        /// Whether to enable frame-stable playback.
-        /// </summary>
-        internal bool FrameStablePlayback
-        {
-            get => frameStablePlayback;
-            set
-            {
-                frameStablePlayback = false;
-                if (frameStabilityContainer != null)
-                    frameStabilityContainer.FrameStablePlayback = value;
-            }
-        }
-
         /// <summary>
         /// The beatmap.
         /// </summary>
@@ -104,13 +81,13 @@ namespace osu.Game.Rulesets.UI
 
         protected IRulesetConfigManager Config { get; private set; }
 
+        internal ReplayInputHandler ReplayInputHandler { get; private set; }
+
         /// <summary>
         /// The mods which are to be applied.
         /// </summary>
         [Cached(typeof(IReadOnlyList<Mod>))]
         private readonly IReadOnlyList<Mod> mods;
-
-        private FrameStabilityContainer frameStabilityContainer;
 
         private OnScreenDisplay onScreenDisplay;
 
@@ -175,34 +152,22 @@ namespace osu.Game.Rulesets.UI
             return dependencies;
         }
 
-        public virtual PlayfieldAdjustmentContainer CreatePlayfieldAdjustmentContainer() => new PlayfieldAdjustmentContainer();
+        public override PlayfieldAdjustmentContainer CreatePlayfieldAdjustmentContainer() => new PlayfieldAdjustmentContainer();
 
         [BackgroundDependencyLoader]
         private void load(OsuConfigManager config, CancellationToken? cancellationToken)
         {
-            InternalChildren = new Drawable[]
-            {
-                frameStabilityContainer = new FrameStabilityContainer(GameplayStartTime)
-                {
-                    FrameStablePlayback = FrameStablePlayback,
-                    Children = new Drawable[]
-                    {
-                        KeyBindingInputManager
-                            .WithChild(new ScalingContainer(ScalingMode.Gameplay)
-                                .WithChild(CreatePlayfieldAdjustmentContainer()
-                                    .WithChild(Playfield))),
-                        overlays = new Container { RelativeSizeAxes = Axes.Both }
-                    }
-                },
-            };
+            InternalChild = KeyBindingInputManager
+                .WithChild(CreatePlayfieldAdjustmentContainer()
+                    .WithChild(Playfield));
 
-            if ((ResumeOverlay = CreateResumeOverlay()) != null)
-            {
-                AddInternal(CreateInputManager()
-                    .WithChild(new ScalingContainer(ScalingMode.Gameplay)
-                        .WithChild(CreatePlayfieldAdjustmentContainer()
-                            .WithChild(ResumeOverlay))));
-            }
+            //if ((ResumeOverlay = CreateResumeOverlay()) != null)
+            //{
+            //    AddInternal(CreateInputManager()
+            //        .WithChild(new ScalingContainer(ScalingMode.Gameplay)
+            //            .WithChild(CreatePlayfieldAdjustmentContainer()
+            //                .WithChild(ResumeOverlay))));
+            //}
 
             applyRulesetMods(mods, config);
 
@@ -228,24 +193,6 @@ namespace osu.Game.Rulesets.UI
                 mod.ApplyToDrawableHitObjects(Playfield.AllHitObjects);
         }
 
-        public override void RequestResume(Action continueResume)
-        {
-            if (ResumeOverlay != null && (Cursor == null || (Cursor.LastFrameState == Visibility.Visible && Contains(Cursor.ActiveCursor.ScreenSpaceDrawQuad.Centre))))
-            {
-                ResumeOverlay.GameplayCursor = Cursor;
-                ResumeOverlay.ResumeAction = continueResume;
-                ResumeOverlay.Show();
-            }
-            else
-                continueResume();
-        }
-
-        public override void CancelResume()
-        {
-            // called if the user pauses while the resume overlay is open
-            ResumeOverlay?.Hide();
-        }
-
         /// <summary>
         /// Creates and adds the visual representation of a <typeparamref name="TObject"/> to this <see cref="DrawableRuleset{TObject}"/>.
         /// </summary>
@@ -268,15 +215,14 @@ namespace osu.Game.Rulesets.UI
             if (!(KeyBindingInputManager is IHasReplayHandler replayInputManager))
                 throw new InvalidOperationException($"A {nameof(KeyBindingInputManager)} which supports replay loading is not available");
 
-            var handler = (ReplayScore = replayScore) != null ? CreateReplayInputHandler(replayScore.Replay) : null;
+            ReplayInputHandler = (ReplayScore = replayScore) != null ? CreateReplayInputHandler(replayScore.Replay) : null;
 
-            replayInputManager.ReplayInputHandler = handler;
-            frameStabilityContainer.ReplayInputHandler = handler;
+            replayInputManager.ReplayInputHandler = ReplayInputHandler;
 
-            HasReplayLoaded.Value = replayInputManager.ReplayInputHandler != null;
+            HasReplayLoaded.Value = ReplayInputHandler != null;
 
-            if (replayInputManager.ReplayInputHandler != null)
-                replayInputManager.ReplayInputHandler.GamefieldToScreenSpace = Playfield.GamefieldToScreenSpace;
+            if (ReplayInputHandler != null)
+                ReplayInputHandler.GamefieldToScreenSpace = Playfield.GamefieldToScreenSpace;
 
             if (!ProvidingUserCursor)
             {
@@ -294,12 +240,6 @@ namespace osu.Game.Rulesets.UI
 
         public void Attach(KeyCounterDisplay keyCounter) =>
             (KeyBindingInputManager as ICanAttachKeyCounter)?.Attach(keyCounter);
-
-        /// <summary>
-        /// Creates a key conversion input manager. An exception will be thrown if a valid <see cref="RulesetInputManager{T}"/> is not returned.
-        /// </summary>
-        /// <returns>The input manager.</returns>
-        protected abstract PassThroughInputManager CreateInputManager();
 
         protected virtual ReplayInputHandler CreateReplayInputHandler(Replay replay) => null;
 
@@ -390,16 +330,6 @@ namespace osu.Game.Rulesets.UI
         public abstract Playfield Playfield { get; }
 
         /// <summary>
-        /// Place to put drawables above hit objects but below UI.
-        /// </summary>
-        public abstract Container Overlays { get; }
-
-        /// <summary>
-        /// The frame-stable clock which is being used for playfield display.
-        /// </summary>
-        public abstract GameplayClock FrameStableClock { get; }
-
-        /// <summary>~
         /// The associated ruleset.
         /// </summary>
         public readonly Ruleset Ruleset;
@@ -435,11 +365,6 @@ namespace osu.Game.Rulesets.UI
         public abstract GameplayCursorContainer Cursor { get; }
 
         /// <summary>
-        /// An optional overlay used when resuming gameplay from a paused state.
-        /// </summary>
-        public ResumeOverlay ResumeOverlay { get; protected set; }
-
-        /// <summary>
         /// Returns first available <see cref="HitWindows"/> provided by a <see cref="HitObject"/>.
         /// </summary>
         [CanBeNull]
@@ -463,25 +388,22 @@ namespace osu.Game.Rulesets.UI
             }
         }
 
-        protected virtual ResumeOverlay CreateResumeOverlay() => null;
+        /// <summary>
+        /// Creates a key conversion input manager. An exception will be thrown if a valid <see cref="RulesetInputManager{T}"/> is not returned.
+        /// </summary>
+        /// <returns>The input manager.</returns>
+        protected internal abstract PassThroughInputManager CreateInputManager();
+
+        public abstract PlayfieldAdjustmentContainer CreatePlayfieldAdjustmentContainer();
+
+        [Obsolete("Use Ruleset.CreateResumeOverlay() instead.")] // can be removed 20200804
+        protected virtual ResumeOverlay CreateResumeOverlay() => Ruleset.CreateResumeOverlay();
 
         /// <summary>
         /// Sets a replay to be used, overriding local input.
         /// </summary>
         /// <param name="replayScore">The replay, null for local input.</param>
         public abstract void SetReplayScore(Score replayScore);
-
-        /// <summary>
-        /// Invoked when the interactive user requests resuming from a paused state.
-        /// Allows potentially delaying the resume process until an interaction is performed.
-        /// </summary>
-        /// <param name="continueResume">The action to run when resuming is to be completed.</param>
-        public abstract void RequestResume(Action continueResume);
-
-        /// <summary>
-        /// Invoked when the user requests to pause while the resume overlay is active.
-        /// </summary>
-        public abstract void CancelResume();
     }
 
     public class BeatmapInvalidForRulesetException : ArgumentException
