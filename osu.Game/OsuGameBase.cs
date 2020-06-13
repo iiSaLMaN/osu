@@ -307,12 +307,12 @@ namespace osu.Game
             }
         }
 
-        public override void SetHost(GameHost host)
+        protected override void SetupStorage(Storage hostStorage)
         {
-            base.SetHost(host);
+            base.SetupStorage(hostStorage);
 
             // may be non-null for certain tests
-            Storage ??= new OsuStorage(host);
+            Storage ??= new OsuStorage(Host);
 
             LocalConfig ??= new OsuConfigManager(Storage);
         }
