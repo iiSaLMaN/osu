@@ -7,6 +7,7 @@ using osu.Framework.Graphics.Sprites;
 using osu.Game.Graphics.Sprites;
 using System;
 using System.Collections.Generic;
+using osu.Framework.Allocation;
 using osu.Framework.Bindables;
 using osuTK.Graphics;
 
@@ -20,7 +21,7 @@ namespace osu.Game.Graphics.UserInterface
         /// </summary>
         public Bindable<T> Current = new Bindable<T>();
 
-        protected SpriteText DisplayedCountSpriteText;
+        private SpriteText displayedCountSpriteText;
 
         /// <summary>
         /// If true, the roll-up duration will be proportional to change in value.
@@ -53,22 +54,40 @@ namespace osu.Game.Graphics.UserInterface
                     return;
 
                 displayedCount = value;
-                DisplayedCountSpriteText.Text = FormatCount(value);
+                Schedule(() => displayedCountSpriteText.Text = FormatCount(value));
             }
         }
 
         public abstract void Increment(T amount);
 
+        private float textSize = 40f;
+
         public float TextSize
         {
-            get => DisplayedCountSpriteText.Font.Size;
-            set => DisplayedCountSpriteText.Font = DisplayedCountSpriteText.Font.With(size: value);
+            get => displayedCountSpriteText?.Font.Size ?? textSize;
+            set
+            {
+                if (TextSize == value)
+                    return;
+
+                textSize = value;
+                Schedule(() => displayedCountSpriteText.Font = displayedCountSpriteText.Font.With(size: value));
+            }
         }
+
+        private Color4 accentColour;
 
         public Color4 AccentColour
         {
-            get => DisplayedCountSpriteText.Colour;
-            set => DisplayedCountSpriteText.Colour = value;
+            get => accentColour;
+            set
+            {
+                if (accentColour == value)
+                    return;
+
+                accentColour = value;
+                Schedule(() => displayedCountSpriteText.Colour = value);
+            }
         }
 
         /// <summary>
@@ -76,27 +95,20 @@ namespace osu.Game.Graphics.UserInterface
         /// </summary>
         protected RollingCounter()
         {
-            Children = new Drawable[]
-            {
-                DisplayedCountSpriteText = new OsuSpriteText { Font = OsuFont.Numeric }
-            };
-
-            TextSize = 40;
             AutoSizeAxes = Axes.Both;
-
-            DisplayedCount = Current.Value;
 
             Current.ValueChanged += val =>
             {
-                if (IsLoaded) TransformCount(displayedCount, val.NewValue);
+                if (IsLoaded) TransformCount(DisplayedCount, val.NewValue);
             };
         }
 
-        protected override void LoadComplete()
+        [BackgroundDependencyLoader]
+        private void load()
         {
-            base.LoadComplete();
-
-            DisplayedCountSpriteText.Text = FormatCount(Current.Value);
+            displayedCountSpriteText = CreateSpriteText();
+            displayedCountSpriteText.Text = FormatCount(displayedCount);
+            Child = displayedCountSpriteText;
         }
 
         /// <summary>
@@ -167,5 +179,7 @@ namespace osu.Game.Graphics.UserInterface
 
             this.TransformTo(nameof(DisplayedCount), newValue, rollingTotalDuration, RollingEasing);
         }
+
+        protected virtual OsuSpriteText CreateSpriteText() => new OsuSpriteText { Font = OsuFont.Numeric.With(size: 40f) };
     }
 }

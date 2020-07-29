@@ -46,5 +46,7 @@ namespace osu.Game.Skinning
         }
 
         public abstract IBindable<TValue> GetConfig<TLookup, TValue>(TLookup lookup);
+
+        protected bool HasFont(string fontPrefix) => GetTexture($"{fontPrefix}-0") != null;
     }
 }

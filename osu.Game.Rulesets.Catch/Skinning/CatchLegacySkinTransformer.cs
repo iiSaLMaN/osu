@@ -6,6 +6,7 @@ using osu.Framework.Bindables;
 using osu.Framework.Graphics;
 using osu.Game.Skinning;
 using osuTK;
+using static osu.Game.Skinning.LegacySkinConfiguration;
 
 namespace osu.Game.Rulesets.Catch.Skinning
 {
@@ -51,6 +52,13 @@ namespace osu.Game.Rulesets.Catch.Skinning
                 case CatchSkinComponents.CatcherKiai:
                     return this.GetAnimation("fruit-catcher-kiai", true, true, true) ??
                            this.GetAnimation("fruit-ryuuta", true, true, true);
+
+                case CatchSkinComponents.CatchComboCounter:
+                    var comboFont = GetConfig<LegacySetting, string>(LegacySetting.ComboPrefix)?.Value ?? "score";
+                    if (HasFont(comboFont))
+                        return new LegacyComboCounter(Source, comboFont);
+
+                    break;
             }
 
             return null;

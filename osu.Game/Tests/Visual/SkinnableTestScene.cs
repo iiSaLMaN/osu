@@ -29,6 +29,8 @@ namespace osu.Game.Tests.Visual
         private Skin specialSkin;
         private Skin oldSkin;
 
+        protected virtual bool ShowContentOutlineBox => true;
+
         protected SkinnableTestScene()
             : base(2, 3)
         {
@@ -104,7 +106,7 @@ namespace osu.Game.Tests.Visual
                         Origin = Anchor.Centre,
                         Children = new Drawable[]
                         {
-                            new OutlineBox { Alpha = autoSize ? 1 : 0 },
+                            new OutlineBox { Alpha = autoSize && ShowContentOutlineBox ? 1 : 0 },
                             mainProvider.WithChild(
                                 new SkinProvidingContainer(Ruleset.Value.CreateInstance().CreateLegacySkinProvider(mainProvider, beatmap))
                                 {
