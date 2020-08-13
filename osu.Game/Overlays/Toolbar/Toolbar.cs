@@ -28,8 +28,6 @@ namespace osu.Game.Overlays.Toolbar
 
         private const double transition_time = 500;
 
-        private readonly Bindable<OverlayActivation> overlayActivationMode = new Bindable<OverlayActivation>(OverlayActivation.All);
-
         // Toolbar components like RulesetSelector should receive keyboard input events even when the toolbar is hidden.
         public override bool PropagateNonPositionalInputSubTree => true;
 
@@ -91,12 +89,9 @@ namespace osu.Game.Overlays.Toolbar
 
             State.ValueChanged += visibility =>
             {
-                if (overlayActivationMode.Value == OverlayActivation.Disabled)
+                if (osuGame?.OverlayActivationMode.Value == OverlayActivation.Disabled)
                     Hide();
             };
-
-            if (osuGame != null)
-                overlayActivationMode.BindTo(osuGame.OverlayActivationMode);
         }
 
         public class ToolbarBackground : Container

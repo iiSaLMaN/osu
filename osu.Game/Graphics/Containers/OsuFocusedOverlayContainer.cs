@@ -35,8 +35,6 @@ namespace osu.Game.Graphics.Containers
         [Resolved]
         private PreviewTrackManager previewTrackManager { get; set; }
 
-        protected readonly Bindable<OverlayActivation> OverlayActivationMode = new Bindable<OverlayActivation>(OverlayActivation.All);
-
         [BackgroundDependencyLoader(true)]
         private void load(AudioManager audio)
         {
@@ -44,12 +42,14 @@ namespace osu.Game.Graphics.Containers
             samplePopOut = audio.Samples.Get(@"UI/overlay-pop-out");
         }
 
+        protected IBindable<OverlayActivation> GameOverlayActivationMode = new Bindable<OverlayActivation>();
+
         protected override void LoadComplete()
         {
             if (game != null)
-                OverlayActivationMode.BindTo(game.OverlayActivationMode);
+                GameOverlayActivationMode.BindTo(game.OverlayActivationMode);
 
-            OverlayActivationMode.BindValueChanged(mode =>
+            GameOverlayActivationMode.BindValueChanged(mode =>
             {
                 if (mode.NewValue == OverlayActivation.Disabled)
                     State.Value = Visibility.Hidden;
@@ -108,7 +108,7 @@ namespace osu.Game.Graphics.Containers
             switch (state.NewValue)
             {
                 case Visibility.Visible:
-                    if (OverlayActivationMode.Value == OverlayActivation.Disabled)
+                    if (GameOverlayActivationMode.Value == OverlayActivation.Disabled)
                     {
                         State.Value = Visibility.Hidden;
                         return;

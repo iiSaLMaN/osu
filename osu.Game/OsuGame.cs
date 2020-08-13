@@ -80,6 +80,11 @@ namespace osu.Game
         [Cached]
         private readonly ScreenshotManager screenshotManager = new ScreenshotManager();
 
+        /// <summary>
+        /// The current global value of the overlay activation mode.
+        /// </summary>
+        public readonly IBindable<OverlayActivation> OverlayActivationMode = new Bindable<OverlayActivation>();
+
         protected SentryLogger SentryLogger;
 
         public virtual Storage GetStorageForStableInstall() => null;
@@ -87,8 +92,6 @@ namespace osu.Game
         public float ToolbarOffset => (Toolbar?.Position.Y ?? 0) + (Toolbar?.DrawHeight ?? 0);
 
         private IdleTracker idleTracker;
-
-        public readonly Bindable<OverlayActivation> OverlayActivationMode = new Bindable<OverlayActivation>();
 
         protected OsuScreenStack ScreenStack;
 
@@ -972,9 +975,12 @@ namespace osu.Game
                     break;
             }
 
+            if (current is IOsuScreen currentOsuScreen)
+                OverlayActivationMode.UnbindFrom(currentOsuScreen.OverlayActivationMode);
+
             if (newScreen is IOsuScreen newOsuScreen)
             {
-                OverlayActivationMode.Value = newOsuScreen.InitialOverlayActivationMode;
+                OverlayActivationMode.BindTo(newOsuScreen.OverlayActivationMode);
 
                 MusicController.AllowRateAdjustments = newOsuScreen.AllowRateAdjustments;
 
