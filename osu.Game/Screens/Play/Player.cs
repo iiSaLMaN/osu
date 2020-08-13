@@ -50,7 +50,13 @@ namespace osu.Game.Screens.Play
 
         public override bool HideOverlaysOnEnter => true;
 
-        public override OverlayActivation InitialOverlayActivationMode => OverlayActivation.UserTriggered;
+        private const OverlayActivation initial_overlay_activation_mode = OverlayActivation.UserTriggered;
+        public override OverlayActivation InitialOverlayActivationMode => initial_overlay_activation_mode;
+
+        /// <summary>
+        /// The current activation mode for overlays.
+        /// </summary>
+        protected readonly Bindable<OverlayActivation> OverlayActivationMode = new Bindable<OverlayActivation>(initial_overlay_activation_mode);
 
         /// <summary>
         /// Whether gameplay should pause when the game window focus is lost.
@@ -62,6 +68,8 @@ namespace osu.Game.Screens.Play
         public bool HasFailed { get; private set; }
 
         private Bindable<bool> mouseWheelDisabled;
+
+        private Bindable<bool> gameplayOverlaysDisabled;
 
         private readonly Bindable<bool> storyboardReplacesBackground = new Bindable<bool>();
 
@@ -76,6 +84,9 @@ namespace osu.Game.Screens.Play
 
         [Resolved]
         private IAPIProvider api { get; set; }
+
+        [Resolved(CanBeNull = true)]
+        private OsuGame game { get; set; }
 
         private SampleChannel sampleRestart;
 
@@ -165,6 +176,7 @@ namespace osu.Game.Screens.Play
             sampleRestart = audio.Samples.Get(@"Gameplay/restart");
 
             mouseWheelDisabled = config.GetBindable<bool>(OsuSetting.MouseDisableWheel);
+            gameplayOverlaysDisabled = config.GetBindable<bool>(OsuSetting.GameplayDisableOverlayActivation);
 
             DrawableRuleset = ruleset.CreateDrawableRulesetWith(playableBeatmap, Mods.Value);
 
@@ -196,6 +208,9 @@ namespace osu.Game.Screens.Play
                 BreakOverlay.Hide();
                 skipOverlay.Hide();
             }
+
+            if (game != null)
+                OverlayActivationMode.BindTo(game.OverlayActivationMode);
 
             DrawableRuleset.HasReplayLoaded.BindValueChanged(_ => updatePauseOnFocusLostState(), true);
 
@@ -339,6 +354,16 @@ namespace osu.Game.Screens.Play
         {
             updatePauseOnFocusLostState();
             HUDOverlay.KeyCounter.IsCounting = !isBreakTime.NewValue;
+        }
+
+        private void updateOverlayActivationMode()
+        {
+            bool canTriggerOverlays = DrawableRuleset.IsPaused.Value || breakTracker.IsBreakTime.Value || !gameplayOverlaysDisabled.Value;
+
+            if (DrawableRuleset.HasReplayLoaded.Value || canTriggerOverlays)
+                OverlayActivationMode.Value = OverlayActivation.UserTriggered;
+            else
+                OverlayActivationMode.Value = OverlayActivation.Disabled;
         }
 
         private void updatePauseOnFocusLostState() =>
@@ -627,6 +652,11 @@ namespace osu.Game.Screens.Play
 
             foreach (var mod in Mods.Value.OfType<IApplicableToHUD>())
                 mod.ApplyToHUD(HUDOverlay);
+
+            DrawableRuleset.IsPaused.BindValueChanged(_ => updateOverlayActivationMode());
+            DrawableRuleset.HasReplayLoaded.BindValueChanged(_ => updateOverlayActivationMode());
+            breakTracker.IsBreakTime.BindValueChanged(_ => updateOverlayActivationMode());
+            gameplayOverlaysDisabled.BindValueChanged(_ => updateOverlayActivationMode(), true);
         }
 
         public override void OnSuspending(IScreen next)
