@@ -5,8 +5,8 @@ namespace osu.Game.Overlays
 {
     public enum OverlayActivation
     {
-        Disabled,
+        All,
         UserTriggered,
-        All
+        Disabled,
     }
 }
