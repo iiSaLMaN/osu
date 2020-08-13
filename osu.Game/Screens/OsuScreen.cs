@@ -44,9 +44,16 @@ namespace osu.Game.Screens
         public virtual bool HideOverlaysOnEnter => false;
 
         /// <summary>
-        /// Whether overlays should be able to be opened once this screen is entered or resumed.
+        /// The initial value of <see cref="OverlayActivationMode"/> bindable set on construction.
         /// </summary>
         public virtual OverlayActivation InitialOverlayActivationMode => OverlayActivation.All;
+
+        /// <summary>
+        /// The current overlay activation mode for this screen, this value is respected once this screen becomes current (entered or resumed).
+        /// </summary>
+        protected readonly Bindable<OverlayActivation> OverlayActivationMode;
+
+        IBindable<OverlayActivation> IOsuScreen.OverlayActivationMode => OverlayActivationMode;
 
         public virtual bool CursorVisible => true;
 
@@ -138,6 +145,8 @@ namespace osu.Game.Screens
         {
             Anchor = Anchor.Centre;
             Origin = Anchor.Centre;
+
+            OverlayActivationMode = new Bindable<OverlayActivation>(InitialOverlayActivationMode);
         }
 
         [BackgroundDependencyLoader(true)]

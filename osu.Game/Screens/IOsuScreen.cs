@@ -39,9 +39,9 @@ namespace osu.Game.Screens
         bool HideOverlaysOnEnter { get; }
 
         /// <summary>
-        /// Whether overlays should be able to be opened once this screen is entered or resumed.
+        /// The current overlay activation mode for this screen, this value is respected once this screen becomes current (entered or resumed).
         /// </summary>
-        OverlayActivation InitialOverlayActivationMode { get; }
+        IBindable<OverlayActivation> OverlayActivationMode { get; }
 
         /// <summary>
         /// The amount of parallax to be applied while this screen is displayed.
