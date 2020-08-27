@@ -46,6 +46,15 @@ namespace osu.Game.Rulesets.Catch.UI
         /// </summary>
         public const double BASE_SPEED = 1.0;
 
+        internal CatchComboDisplay ComboDisplay { get; } = new CatchComboDisplay
+        {
+            RelativeSizeAxes = Axes.None,
+            AutoSizeAxes = Axes.Both,
+            Anchor = Anchor.TopCentre,
+            Origin = Anchor.Centre,
+            Margin = new MarginPadding { Bottom = 300f },
+        };
+
         private Container directionRespectingContainer;
 
         public Container ExplodingFruitTarget;
