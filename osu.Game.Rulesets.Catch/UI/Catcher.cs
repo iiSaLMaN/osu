@@ -55,7 +55,7 @@ namespace osu.Game.Rulesets.Catch.UI
             Margin = new MarginPadding { Bottom = 300f },
         };
 
-        private Container directionRespectingContainer;
+        private Container catcherContent;
 
         public Container ExplodingFruitTarget;
 
@@ -126,9 +126,9 @@ namespace osu.Game.Rulesets.Catch.UI
 
             Size = new Vector2(CatcherArea.CATCHER_SIZE);
             if (difficulty != null)
-                Scale = calculateScale(difficulty);
+                catcherContent.Scale = calculateScale(difficulty);
 
-            catchWidth = CalculateCatchWidth(Scale);
+            catchWidth = CalculateCatchWidth(catcherContent.Scale);
         }
 
         [BackgroundDependencyLoader]
@@ -139,7 +139,7 @@ namespace osu.Game.Rulesets.Catch.UI
             InternalChildren = new Drawable[]
             {
                 ComboDisplay,
-                directionRespectingContainer = new Container
+                catcherContent = new Container
                 {
                     Anchor = Anchor.TopCentre,
                     Origin = Anchor.TopCentre,
@@ -369,7 +369,7 @@ namespace osu.Game.Rulesets.Catch.UI
             if (position == X)
                 return;
 
-            directionRespectingContainer.Scale = new Vector2(position > X ? 1 : -1, 1);
+            catcherContent.Scale = new Vector2(catcherContent.Scale.X * position > X ? 1 : -1, catcherContent.Scale.Y);
             X = position;
         }
 
@@ -402,7 +402,7 @@ namespace osu.Game.Rulesets.Catch.UI
 
         public void Explode(DrawableHitObject fruit)
         {
-            var originalX = fruit.X * Scale.X;
+            var originalX = fruit.X * catcherContent.Scale.X;
 
             removeFromPlateWithTransform(fruit, f =>
             {
