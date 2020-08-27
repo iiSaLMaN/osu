@@ -46,6 +46,8 @@ namespace osu.Game.Rulesets.Catch.UI
         /// </summary>
         public const double BASE_SPEED = 1.0;
 
+        private Container directionRespectingContainer;
+
         public Container ExplodingFruitTarget;
 
         private Container<DrawableHitObject> caughtFruitContainer { get; } = new Container<DrawableHitObject>
@@ -127,21 +129,31 @@ namespace osu.Game.Rulesets.Catch.UI
 
             InternalChildren = new Drawable[]
             {
-                caughtFruitContainer,
-                catcherIdle = new CatcherSprite(CatcherAnimationState.Idle)
+                ComboDisplay,
+                directionRespectingContainer = new Container
                 {
                     Anchor = Anchor.TopCentre,
-                    Alpha = 0,
-                },
-                catcherKiai = new CatcherSprite(CatcherAnimationState.Kiai)
-                {
-                    Anchor = Anchor.TopCentre,
-                    Alpha = 0,
-                },
-                catcherFail = new CatcherSprite(CatcherAnimationState.Fail)
-                {
-                    Anchor = Anchor.TopCentre,
-                    Alpha = 0,
+                    Origin = Anchor.TopCentre,
+                    RelativeSizeAxes = Axes.Both,
+                    Children = new Drawable[]
+                    {
+                        caughtFruitContainer,
+                        catcherIdle = new CatcherSprite(CatcherAnimationState.Idle)
+                        {
+                            Anchor = Anchor.TopCentre,
+                            Alpha = 0,
+                        },
+                        catcherKiai = new CatcherSprite(CatcherAnimationState.Kiai)
+                        {
+                            Anchor = Anchor.TopCentre,
+                            Alpha = 0,
+                        },
+                        catcherFail = new CatcherSprite(CatcherAnimationState.Fail)
+                        {
+                            Anchor = Anchor.TopCentre,
+                            Alpha = 0,
+                        }
+                    }
                 }
             };
 
@@ -348,7 +360,7 @@ namespace osu.Game.Rulesets.Catch.UI
             if (position == X)
                 return;
 
-            Scale = new Vector2(Math.Abs(Scale.X) * (position > X ? 1 : -1), Scale.Y);
+            directionRespectingContainer.Scale = new Vector2(position > X ? 1 : -1, 1);
             X = position;
         }
 
