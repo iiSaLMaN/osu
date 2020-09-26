@@ -25,7 +25,6 @@ namespace osu.Game.Rulesets.Osu.UI
     {
         private readonly ProxyContainer approachCircles;
         private readonly ProxyContainer spinnerProxies;
-        private readonly JudgementContainer<DrawableOsuJudgement> judgementLayer;
         private readonly FollowPointRenderer followPoints;
         private readonly OrderedHitPolicy hitPolicy;
 
@@ -47,11 +46,6 @@ namespace osu.Game.Rulesets.Osu.UI
                 {
                     RelativeSizeAxes = Axes.Both,
                     Depth = 2,
-                },
-                judgementLayer = new JudgementContainer<DrawableOsuJudgement>
-                {
-                    RelativeSizeAxes = Axes.Both,
-                    Depth = 1,
                 },
                 // Todo: This should not exist, but currently helps to reduce LOH allocations due to unbinding skin source events on judgement disposal
                 // Todo: Remove when hitobjects are properly pooled
@@ -111,12 +105,7 @@ namespace osu.Game.Rulesets.Osu.UI
             // Hitobjects that block future hits should miss previous hitobjects if they're hit out-of-order.
             hitPolicy.HandleHit(judgedObject);
 
-            if (!judgedObject.DisplayResult || !DisplayJudgements.Value)
-                return;
 
-            DrawableOsuJudgement explosion = poolDictionary[result.Type].Get(doj => doj.Apply(result, judgedObject));
-
-            judgementLayer.Add(explosion);
         }
 
         public override bool ReceivePositionalInputAt(Vector2 screenSpacePos) => HitObjectContainer.ReceivePositionalInputAt(screenSpacePos);
