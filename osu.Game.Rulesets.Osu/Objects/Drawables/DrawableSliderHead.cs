@@ -42,7 +42,7 @@ namespace osu.Game.Rulesets.Osu.Objects.Drawables
 
             //todo: we probably want to reconsider this before adding scoring, but it looks and feels nice.
             if (!IsHit)
-                Position = slider.CurvePositionAt(completionProgress);
+                Content.Position = slider.CurvePositionAt(completionProgress);
         }
 
         public Action<double> OnShake;
