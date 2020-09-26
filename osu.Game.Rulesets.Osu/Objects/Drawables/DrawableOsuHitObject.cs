@@ -36,6 +36,9 @@ namespace osu.Game.Rulesets.Osu.Objects.Drawables
         /// </summary>
         public Func<JudgementResult, DrawableHitObject, DrawableOsuJudgement> GetDrawableJudgementFor;
 
+        /// <summary>
+        /// The <see cref="Container"/> holding the modifiable content of this drawable object, which excludes components like the <see cref="judgementContainer"/>.
+        /// </summary>
         protected Container<Drawable> Content { get; }
 
         public override float Alpha
