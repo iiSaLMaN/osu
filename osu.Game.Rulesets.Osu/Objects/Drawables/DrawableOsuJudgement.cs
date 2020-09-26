@@ -4,6 +4,7 @@
 using osu.Framework.Allocation;
 using osu.Framework.Bindables;
 using osu.Framework.Graphics;
+using osu.Framework.Graphics.Containers;
 using osu.Game.Configuration;
 using osuTK;
 using osu.Game.Rulesets.Judgements;
@@ -23,13 +24,27 @@ namespace osu.Game.Rulesets.Osu.Objects.Drawables
         [Resolved]
         private OsuConfigManager config { get; set; }
 
+        // Scaling is split into an internal container as it has to be done in a centered origin, which cannot be done
+        // with the current judgements display logic inside DrawableOsuHitObject (forced to be a top-left origin).
+        private readonly Container scaleContainer;
+
         public DrawableOsuJudgement(JudgementResult result, DrawableHitObject judgedObject)
             : base(result, judgedObject)
         {
+            base.AddInternal(scaleContainer = new Container
+            {
+                Anchor = Anchor.Centre,
+                Origin = Anchor.Centre,
+            });
         }
 
         public DrawableOsuJudgement()
         {
+            base.AddInternal(scaleContainer = new Container
+            {
+                Anchor = Anchor.Centre,
+                Origin = Anchor.Centre,
+            });
         }
 
         [BackgroundDependencyLoader]
@@ -45,15 +60,16 @@ namespace osu.Game.Rulesets.Osu.Objects.Drawables
             });
         }
 
+        protected override void AddInternal(Drawable drawable) => scaleContainer.Add(drawable);
+        protected override bool RemoveInternal(Drawable drawable) => scaleContainer.Remove(drawable);
+        protected override void ClearInternal(bool disposeChildren = true) => scaleContainer.Clear(disposeChildren);
+
         public override void Apply(JudgementResult result, DrawableHitObject judgedObject)
         {
             base.Apply(result, judgedObject);
 
             if (judgedObject?.HitObject is OsuHitObject osuObject)
-            {
-                Position = osuObject.StackedPosition;
-                Scale = new Vector2(osuObject.Scale);
-            }
+                scaleContainer.Scale = new Vector2(osuObject.Scale);
         }
 
         protected override void PrepareForUse()
