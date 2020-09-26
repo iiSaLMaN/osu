@@ -4,17 +4,21 @@
 using System;
 using osu.Game.Rulesets.Objects.Drawables;
 using osu.Framework.Graphics;
+using osu.Framework.Graphics.Containers;
 using osu.Game.Rulesets.Judgements;
 using osu.Game.Rulesets.Osu.Judgements;
 using osu.Game.Graphics.Containers;
 using osu.Game.Rulesets.Osu.UI;
 using osu.Game.Rulesets.Scoring;
+using osu.Game.Rulesets.UI;
+using osuTK;
 
 namespace osu.Game.Rulesets.Osu.Objects.Drawables
 {
     public class DrawableOsuHitObject : DrawableHitObject<OsuHitObject>
     {
         private readonly ShakeContainer shakeContainer;
+        private readonly JudgementContainer<DrawableOsuJudgement> judgementContainer;
 
         // Must be set to update IsHovered as it's used in relax mdo to detect osu hit objects.
         public override bool HandlePositionalInput => true;
@@ -27,6 +31,11 @@ namespace osu.Game.Rulesets.Osu.Objects.Drawables
         /// </summary>
         public Func<DrawableHitObject, double, bool> CheckHittable;
 
+        /// <summary>
+        /// Retrieves a drawable judgement for a certain <see cref="JudgementResult"/> to display on the screen.
+        /// </summary>
+        public Func<JudgementResult, DrawableHitObject, DrawableOsuJudgement> GetDrawableJudgementFor;
+
         protected DrawableOsuHitObject(OsuHitObject hitObject)
             : base(hitObject)
         {
@@ -36,7 +45,23 @@ namespace osu.Game.Rulesets.Osu.Objects.Drawables
                 RelativeSizeAxes = Axes.Both
             });
 
-            Alpha = 0;
+            base.AddInternal(judgementContainer = new OsuJudgementContainer
+            {
+                Anchor = Anchor.Centre,
+                Origin = Anchor.Centre,
+                RelativeSizeAxes = Axes.Both,
+            });
+        }
+
+        protected override void LoadComplete()
+        {
+            base.LoadComplete();
+
+            OnNewResult += (drawableObject, res) =>
+            {
+                if (drawableObject.DisplayResult)
+                    displayJudgement(drawableObject, res);
+            };
         }
 
         // Forward all internal management to shakeContainer.
@@ -66,10 +91,41 @@ namespace osu.Game.Rulesets.Osu.Objects.Drawables
         }
 
         /// <summary>
+        /// Displays a <see cref="DrawableJudgement"/> at the exact center of the given <see cref="DrawableHitObject"/>'s position.
+        /// </summary>
+        /// <param name="drawableObject">The drawable hit object to position the <see cref="DrawableJudgement"/> on top of.</param>
+        /// <param name="result">The result of the judgement.</param>
+        private void displayJudgement(DrawableHitObject drawableObject, JudgementResult result)
+        {
+            var drawableJudgement = GetDrawableJudgementFor?.Invoke(result, drawableObject);
+            if (drawableJudgement == null)
+                return;
+
+            drawableJudgement.Anchor = Anchor.TopLeft;
+            drawableJudgement.Origin = Anchor.TopLeft;
+            drawableJudgement.Size = drawableObject.DrawSize;
+            drawableJudgement.Position = drawableObject == this ? Vector2.Zero : drawableObject.ToSpaceOfOtherDrawable(drawableObject.Position, this);
+            judgementContainer.Add(drawableJudgement);
+        }
+
+        /// <summary>
         /// Causes this <see cref="DrawableOsuHitObject"/> to get missed, disregarding all conditions in implementations of <see cref="DrawableHitObject.CheckForResult"/>.
         /// </summary>
         public void MissForcefully() => ApplyResult(r => r.Type = HitResult.Miss);
 
         protected override JudgementResult CreateResult(Judgement judgement) => new OsuJudgementResult(HitObject, judgement);
+
+        private class OsuJudgementContainer : JudgementContainer<DrawableOsuJudgement>
+        {
+            public override void ApplyTransformsAt(double time, bool propagateChildren = false)
+            {
+                // Block DHO's automatic state management from intefering with the drawable judgement animations, as it shouldn't.
+            }
+
+            public override void ClearTransformsAfter(double time, bool propagateChildren = false, string targetMember = null)
+            {
+                // Block DHO's automatic state management from intefering with the drawable judgement animations, as it shouldn't.
+            }
+        }
     }
 }

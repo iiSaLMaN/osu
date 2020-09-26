@@ -86,6 +86,7 @@ namespace osu.Game.Rulesets.Osu.UI
 
             DrawableOsuHitObject osuHitObject = (DrawableOsuHitObject)h;
             osuHitObject.CheckHittable = hitPolicy.IsHittable;
+            osuHitObject.GetDrawableJudgementFor = getDrawableJudgementFor;
 
             followPoints.AddFollowPoints(osuHitObject);
         }
@@ -104,8 +105,14 @@ namespace osu.Game.Rulesets.Osu.UI
         {
             // Hitobjects that block future hits should miss previous hitobjects if they're hit out-of-order.
             hitPolicy.HandleHit(judgedObject);
+        }
 
+        private DrawableOsuJudgement getDrawableJudgementFor(JudgementResult result, DrawableHitObject hitObject)
+        {
+            if (!DisplayJudgements.Value)
+                return null;
 
+            return poolDictionary[result.Type].Get(doj => doj.Apply(result, hitObject));
         }
 
         public override bool ReceivePositionalInputAt(Vector2 screenSpacePos) => HitObjectContainer.ReceivePositionalInputAt(screenSpacePos);
