@@ -36,16 +36,26 @@ namespace osu.Game.Rulesets.Osu.Objects.Drawables
         /// </summary>
         public Func<JudgementResult, DrawableHitObject, DrawableOsuJudgement> GetDrawableJudgementFor;
 
+        protected Container<Drawable> Content { get; }
+
+        public override float Alpha
+        {
+            get => Content.Alpha;
+            set => Content.Alpha = value;
+        }
+
         public override double LifetimeEnd
         {
             get => base.LifetimeEnd;
             set => updateLifetimeEnd(value);
         }
 
+        public override bool IsPresent => true;
+
         protected DrawableOsuHitObject(OsuHitObject hitObject)
             : base(hitObject)
         {
-            base.AddInternal(shakeContainer = new ShakeContainer
+            base.AddInternal(Content = shakeContainer = new ShakeContainer
             {
                 ShakeDuration = 30,
                 RelativeSizeAxes = Axes.Both
