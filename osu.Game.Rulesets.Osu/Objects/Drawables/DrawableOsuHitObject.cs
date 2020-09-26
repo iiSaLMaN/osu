@@ -36,6 +36,12 @@ namespace osu.Game.Rulesets.Osu.Objects.Drawables
         /// </summary>
         public Func<JudgementResult, DrawableHitObject, DrawableOsuJudgement> GetDrawableJudgementFor;
 
+        public override double LifetimeEnd
+        {
+            get => base.LifetimeEnd;
+            set => updateLifetimeEnd(value);
+        }
+
         protected DrawableOsuHitObject(OsuHitObject hitObject)
             : base(hitObject)
         {
@@ -106,6 +112,23 @@ namespace osu.Game.Rulesets.Osu.Objects.Drawables
             drawableJudgement.Size = drawableObject.DrawSize;
             drawableJudgement.Position = drawableObject == this ? Vector2.Zero : drawableObject.ToSpaceOfOtherDrawable(drawableObject.Position, this);
             judgementContainer.Add(drawableJudgement);
+
+            ScheduleAfterChildren(() => updateLifetimeEnd(LifetimeEnd));
+        }
+
+        private void updateLifetimeEnd(double value)
+        {
+            double maxLifetimeEnd = double.MinValue;
+
+            foreach (var drawableJudgement in judgementContainer)
+            {
+                if (!drawableJudgement.IsLoaded)
+                    continue;
+
+                maxLifetimeEnd = Math.Max(drawableJudgement.LifetimeEnd, maxLifetimeEnd);
+            }
+
+            base.LifetimeEnd = Math.Max(value, maxLifetimeEnd);
         }
 
         /// <summary>
