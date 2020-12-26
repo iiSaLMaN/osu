@@ -3,6 +3,7 @@
 
 using System.Linq;
 using NUnit.Framework;
+using osu.Framework.Bindables;
 using osu.Framework.Screens;
 using osu.Framework.Testing;
 using osu.Game.Online.Rooms;
@@ -16,7 +17,7 @@ namespace osu.Game.Tests.Visual.Multiplayer
 {
     public class TestSceneMultiplayerMatchSubScreen : MultiplayerTestScene
     {
-        private MultiplayerMatchSubScreen screen;
+        private TestMultiplayerMatchSubScreen screen;
 
         public TestSceneMultiplayerMatchSubScreen()
             : base(false)
@@ -32,7 +33,7 @@ namespace osu.Game.Tests.Visual.Multiplayer
         [SetUpSteps]
         public void SetupSteps()
         {
-            AddStep("load match", () => LoadScreen(screen = new MultiplayerMatchSubScreen(Room)));
+            AddStep("load match", () => LoadScreen(screen = new TestMultiplayerMatchSubScreen(Room)));
             AddUntilStep("wait for load", () => screen.IsCurrentScreen());
         }
 
@@ -71,7 +72,17 @@ namespace osu.Game.Tests.Visual.Multiplayer
                 InputManager.Click(MouseButton.Left);
             });
 
-            AddWaitStep("wait", 10);
+            AddUntilStep("wait for room", () => Client.Room != null && screen.SelectedItem.Value != null);
+        }
+
+        private class TestMultiplayerMatchSubScreen : MultiplayerMatchSubScreen
+        {
+            public new Bindable<PlaylistItem> SelectedItem => base.SelectedItem;
+
+            public TestMultiplayerMatchSubScreen(Room room)
+                : base(room)
+            {
+            }
         }
     }
 }
