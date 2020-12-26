@@ -1,7 +1,6 @@
 // Copyright (c) ppy Pty Ltd <contact@ppy.sh>. Licensed under the MIT Licence.
 // See the LICENCE file in the repository root for full licence text.
 
-using System.Diagnostics;
 using osu.Framework.Allocation;
 using osu.Framework.Extensions.Color4Extensions;
 using osu.Framework.Graphics;
@@ -45,8 +44,6 @@ namespace osu.Game.Screens.OnlinePlay.Multiplayer.Participants
         [BackgroundDependencyLoader]
         private void load()
         {
-            Debug.Assert(User.User != null);
-
             var backgroundColour = Color4Extensions.FromHex("#33413C");
 
             InternalChildren = new Drawable[]
@@ -105,21 +102,21 @@ namespace osu.Game.Screens.OnlinePlay.Multiplayer.Participants
                                         Anchor = Anchor.CentreLeft,
                                         Origin = Anchor.CentreLeft,
                                         Size = new Vector2(30, 20),
-                                        Country = User.User.Country
+                                        Country = User.User?.Country
                                     },
                                     new OsuSpriteText
                                     {
                                         Anchor = Anchor.CentreLeft,
                                         Origin = Anchor.CentreLeft,
                                         Font = OsuFont.GetFont(weight: FontWeight.Bold, size: 18),
-                                        Text = User.User.Username
+                                        Text = User.User?.Username ?? "Unknown user"
                                     },
                                     new OsuSpriteText
                                     {
                                         Anchor = Anchor.CentreLeft,
                                         Origin = Anchor.CentreLeft,
                                         Font = OsuFont.GetFont(size: 14),
-                                        Text = User.User.CurrentModeRank != null ? $"#{User.User.CurrentModeRank}" : string.Empty
+                                        Text = User.User?.CurrentModeRank != null ? $"#{User.User?.CurrentModeRank}" : string.Empty
                                     }
                                 }
                             },
