@@ -3,6 +3,7 @@
 
 #nullable enable
 
+using System;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
@@ -10,6 +11,7 @@ using osu.Framework.Allocation;
 using osu.Framework.Bindables;
 using osu.Game.Online.API;
 using osu.Game.Online.Multiplayer;
+using osu.Game.Online.Rooms;
 using osu.Game.Users;
 
 namespace osu.Game.Tests.Visual.Multiplayer
@@ -21,6 +23,8 @@ namespace osu.Game.Tests.Visual.Multiplayer
 
         [Resolved]
         private IAPIProvider api { get; set; } = null!;
+
+        public Func<long, Room> GetRoom = null!;
 
         public void Connect() => isConnected.Value = true;
 
@@ -79,7 +83,21 @@ namespace osu.Game.Tests.Visual.Multiplayer
         {
             var user = new MultiplayerRoomUser(api.LocalUser.Value.Id) { User = api.LocalUser.Value };
 
-            var room = new MultiplayerRoom(roomId);
+            var apiRoom = GetRoom.Invoke(roomId);
+            var playlistItem = apiRoom.Playlist.Single();
+
+            var room = new MultiplayerRoom(roomId)
+            {
+                Settings =
+                {
+                    Name = apiRoom.Name.Value,
+                    BeatmapChecksum = playlistItem.Beatmap.Value.MD5Hash,
+                    BeatmapID = playlistItem.BeatmapID,
+                    RulesetID = playlistItem.RulesetID,
+                    Mods = playlistItem.RequiredMods.Select(m => new APIMod(m)),
+                }
+            };
+
             room.Users.Add(user);
 
             if (room.Users.Count == 1)
