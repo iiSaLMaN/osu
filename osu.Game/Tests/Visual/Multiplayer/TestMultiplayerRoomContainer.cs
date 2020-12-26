@@ -31,8 +31,8 @@ namespace osu.Game.Tests.Visual.Multiplayer
 
             AddRangeInternal(new Drawable[]
             {
-                Client = new TestMultiplayerClient(),
                 RoomManager = new TestMultiplayerRoomManager(),
+                Client = new TestMultiplayerClient { GetRoom = RoomManager.GetRoom },
                 content = new Container { RelativeSizeAxes = Axes.Both }
             });
         }
