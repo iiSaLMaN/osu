@@ -57,6 +57,19 @@ namespace osu.Game.Tests.Visual.Multiplayer
         [Test]
         public void TestCreatedRoom()
         {
+            addCreateRoomSteps();
+        }
+
+        [Test]
+        public void TestNullUserInRoom()
+        {
+            addCreateRoomSteps();
+
+            AddStep("add null user", () => Client.AddUser(null));
+        }
+
+        private void addCreateRoomSteps()
+        {
             AddStep("set playlist", () =>
             {
                 Room.Playlist.Add(new PlaylistItem
@@ -72,7 +85,7 @@ namespace osu.Game.Tests.Visual.Multiplayer
                 InputManager.Click(MouseButton.Left);
             });
 
-            AddUntilStep("wait for room", () => Client.Room != null && screen.SelectedItem.Value != null);
+            AddUntilStep("wait for room creation", () => Client.Room != null && screen.SelectedItem.Value != null);
         }
 
         private class TestMultiplayerMatchSubScreen : MultiplayerMatchSubScreen
