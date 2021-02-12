@@ -56,7 +56,7 @@ namespace osu.Game.Screens.Play
 
         private bool backgroundBrightnessReduction;
 
-        private readonly BindableDouble volumeAdjustment = new BindableDouble(1);
+        private readonly BindableDouble trackFadeAdjustment = new BindableDouble(1);
 
         protected bool BackgroundBrightnessReduction
         {
@@ -174,6 +174,8 @@ namespace osu.Game.Screens.Play
 
         public override void OnEntering(IScreen last)
         {
+            applyTrackFade();
+
             base.OnEntering(last);
 
             ApplyToBackground(b =>
@@ -183,8 +185,6 @@ namespace osu.Game.Screens.Play
 
                 b?.FadeColour(Color4.White, 800, Easing.OutQuint);
             });
-
-            Beatmap.Value.Track.AddAdjustment(AdjustableProperty.Volume, volumeAdjustment);
 
             content.ScaleTo(0.7f);
 
@@ -201,6 +201,8 @@ namespace osu.Game.Screens.Play
 
         public override void OnResuming(IScreen last)
         {
+            applyTrackFade();
+
             base.OnResuming(last);
 
             // prepare for a retry.
@@ -220,7 +222,7 @@ namespace osu.Game.Screens.Play
             // we're moving to player, so a period of silence is upcoming.
             // stop the track before removing adjustment to avoid a volume spike.
             Beatmap.Value.Track.Stop();
-            Beatmap.Value.Track.RemoveAdjustment(AdjustableProperty.Volume, volumeAdjustment);
+            removeTrackFade();
         }
 
         public override bool OnExiting(IScreen next)
@@ -233,7 +235,7 @@ namespace osu.Game.Screens.Play
             ApplyToBackground(b => b.EnableUserDim.Value = false);
 
             BackgroundBrightnessReduction = false;
-            Beatmap.Value.Track.RemoveAdjustment(AdjustableProperty.Volume, volumeAdjustment);
+            removeTrackFade();
 
             return base.OnExiting(next);
         }
@@ -342,6 +344,18 @@ namespace osu.Game.Screens.Play
             content.FadeOut(250);
         }
 
+        private void applyTrackFade()
+        {
+            Beatmap.Value.Track.AddAdjustment(AdjustableProperty.Volume, trackFadeAdjustment);
+            this.TransformBindableTo(trackFadeAdjustment, 0f, 1500, Easing.OutSine);
+        }
+
+        private void removeTrackFade()
+        {
+            Beatmap.Value.Track.RemoveAdjustment(AdjustableProperty.Volume, trackFadeAdjustment);
+            trackFadeAdjustment.Value = 1;
+        }
+
         private void pushWhenLoaded()
         {
             if (!this.IsCurrentScreen()) return;
@@ -376,7 +390,6 @@ namespace osu.Game.Screens.Play
 
                     pushSequence
                         .Schedule(() => epilepsyWarning.State.Value = Visibility.Visible)
-                        .TransformBindableTo(volumeAdjustment, 0.25, EpilepsyWarning.FADE_DURATION, Easing.OutQuint)
                         .Delay(epilepsy_display_length)
                         .Schedule(() =>
                         {
