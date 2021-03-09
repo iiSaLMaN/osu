@@ -272,6 +272,40 @@ namespace osu.Game.Overlays.KeyBinding
             finalise();
         }
 
+        protected override bool Handle(UIEvent e)
+        {
+            switch (e)
+            {
+                case TabletPenButtonPressEvent penDown:
+                    if (!HasFocus)
+                        return false;
+
+                    bindTarget.UpdateKeyCombination(KeyCombination.FromTabletPenButton(penDown.Button));
+                    finalise();
+
+                    return true;
+
+                case TabletAuxiliaryButtonPressEvent auxDown:
+                    if (!HasFocus)
+                        return false;
+
+                    bindTarget.UpdateKeyCombination(KeyCombination.FromTabletAuxiliaryButton(auxDown.Button));
+                    finalise();
+
+                    return true;
+
+                case TabletPenButtonReleaseEvent _:
+                case TabletAuxiliaryButtonReleaseEvent _:
+                    if (!HasFocus)
+                        break;
+
+                    finalise();
+                    return true;
+            }
+
+            return base.Handle(e);
+        }
+
         private void clear()
         {
             if (bindTarget == null)
