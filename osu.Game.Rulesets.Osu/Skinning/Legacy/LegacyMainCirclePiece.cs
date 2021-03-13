@@ -36,7 +36,7 @@ namespace osu.Game.Rulesets.Osu.Skinning.Legacy
         private Sprite hitCircleSprite;
         private Sprite hitCircleOverlay;
 
-        private SkinnableSpriteText hitCircleText;
+        private LegacySpriteText hitCircleText;
 
         private readonly Bindable<Color4> accentColour = new Bindable<Color4>();
         private readonly IBindable<int> indexInCurrentCombo = new Bindable<int>();
@@ -96,14 +96,12 @@ namespace osu.Game.Rulesets.Osu.Skinning.Legacy
 
             if (hasNumber)
             {
-                AddInternal(hitCircleText = new SkinnableSpriteText(new OsuSkinComponent(OsuSkinComponents.HitCircleText), _ => new OsuSpriteText
-                {
-                    Font = OsuFont.Numeric.With(size: 40),
-                    UseFullGlyphHeight = false,
-                }, confineMode: ConfineMode.NoScaling)
+                AddInternal(hitCircleText = new LegacySpriteText(skin, LegacyFont.HitCircle)
                 {
                     Anchor = Anchor.Centre,
                     Origin = Anchor.Centre,
+                    // stable applies a blanket 0.8x scale to hitcircle fonts
+                    Scale = new Vector2(0.8f),
                 });
             }
 
