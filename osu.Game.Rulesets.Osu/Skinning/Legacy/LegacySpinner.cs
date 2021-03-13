@@ -70,15 +70,14 @@ namespace osu.Game.Rulesets.Osu.Skinning.Legacy
                         Scale = new Vector2(SPRITE_SCALE),
                         Y = SPINNER_TOP_OFFSET + 115,
                     },
-                    bonusCounter = ((LegacySpriteText)source.GetDrawableComponent(new HUDSkinComponent(HUDSkinComponents.ScoreText))).With(s =>
+                    bonusCounter = new LegacySpriteText(source, LegacyFont.Score)
                     {
-                        s.Alpha = 0f;
-                        s.Anchor = Anchor.TopCentre;
-                        s.Origin = Anchor.Centre;
-                        s.Font = s.Font.With(fixedWidth: false);
-                        s.Scale = new Vector2(SPRITE_SCALE);
-                        s.Y = SPINNER_TOP_OFFSET + 299;
-                    }),
+                        Alpha = 0f,
+                        Anchor = Anchor.TopCentre,
+                        Origin = Anchor.Centre,
+                        Scale = new Vector2(SPRITE_SCALE),
+                        Y = SPINNER_TOP_OFFSET + 299,
+                    }.With(s => s.Font = s.Font.With(fixedWidth: false)),
                 }
             });
         }
