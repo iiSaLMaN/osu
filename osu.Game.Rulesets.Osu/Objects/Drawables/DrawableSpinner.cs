@@ -41,9 +41,7 @@ namespace osu.Game.Rulesets.Osu.Objects.Drawables
         /// <summary>
         /// The amount of bonus score gained from spinning after the required number of spins, for display purposes.
         /// </summary>
-        public IBindable<double> GainedBonus => gainedBonus;
-
-        private readonly Bindable<double> gainedBonus = new Bindable<double>();
+        public readonly IBindable<double> GainedBonus = new BindableDouble();
 
         public DrawableSpinner()
             : this(null)
@@ -64,6 +62,10 @@ namespace osu.Game.Rulesets.Osu.Objects.Drawables
             InternalChildren = new Drawable[]
             {
                 ticks = new Container<DrawableSpinnerTick>(),
+                new SpinnerBonusProcessor(ticks)
+                {
+                    Result = { BindTarget = GainedBonus }
+                },
                 new AspectContainer
                 {
                     Anchor = Anchor.Centre,
@@ -282,45 +284,8 @@ namespace osu.Game.Rulesets.Osu.Objects.Drawables
             // this shouldn't be limited to StartTime as it causes weirdness with the underlying calculation, which is expecting updates during that period.
             if (Time.Current <= HitObject.EndTime)
                 SpmCounter.SetRotation(Result.RateAdjustedRotation);
-
-            updateBonusScore();
         }
 
         private void fadeInCounter() => SpmCounter.FadeIn(HitObject.TimeFadeIn);
-
-        private static readonly int score_per_tick = new SpinnerBonusTick.OsuSpinnerBonusTickJudgement().MaxNumericResult;
-
-        private int wholeSpins;
-
-        private void updateBonusScore()
-        {
-            if (ticks.Count == 0)
-                return;
-
-            int spins = (int)(Result.RateAdjustedRotation / 360);
-
-            if (spins < wholeSpins)
-            {
-                // rewinding, silently handle
-                wholeSpins = spins;
-                return;
-            }
-
-            while (wholeSpins != spins)
-            {
-                var tick = ticks.FirstOrDefault(t => !t.Result.HasResult);
-
-                // tick may be null if we've hit the spin limit.
-                if (tick != null)
-                {
-                    tick.TriggerResult(true);
-
-                    if (tick is DrawableSpinnerBonusTick)
-                        gainedBonus.Value = score_per_tick * (spins - HitObject.SpinsRequired);
-                }
-
-                wholeSpins++;
-            }
-        }
     }
 }
