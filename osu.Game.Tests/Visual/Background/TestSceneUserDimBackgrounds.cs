@@ -13,6 +13,7 @@ using osu.Framework.Input.Events;
 using osu.Framework.Input.States;
 using osu.Framework.Platform;
 using osu.Framework.Screens;
+using osu.Framework.Testing;
 using osu.Game.Beatmaps;
 using osu.Game.Configuration;
 using osu.Game.Graphics;
@@ -166,6 +167,29 @@ namespace osu.Game.Tests.Visual.Background
             AddUntilStep("Storyboard is invisible", () => !player.IsStoryboardVisible);
             AddStep("Disable user dim", () => player.DimmableStoryboard.IgnoreUserSettings.Value = true);
             AddUntilStep("Storyboard is visible", () => player.IsStoryboardVisible);
+        }
+
+        [Test]
+        public void TestStoryboardIgnoreUserSettings()
+        {
+            performFullSetup();
+            createFakeStoryboard();
+            AddStep("Enable replacing background", () => player.ReplacesBackground.Value = true);
+
+            AddUntilStep("Storyboard is invisible", () => !player.IsStoryboardVisible);
+            AddUntilStep("Background is visible", () => player.IsBackgroundVisible);
+
+            AddStep("Ignore user settings", () =>
+            {
+                player.ApplyToBackground(b => b.IgnoreUserSettings.Value = true);
+                player.DimmableStoryboard.IgnoreUserSettings.Value = true;
+            });
+            AddUntilStep("Storyboard is visible", () => player.IsStoryboardVisible);
+            AddUntilStep("Background is invisible", () => !player.IsBackgroundVisible);
+
+            AddStep("Disable background replacement", () => player.ReplacesBackground.Value = false);
+            AddUntilStep("Storyboard is visible", () => player.IsStoryboardVisible);
+            AddUntilStep("Background is visible", () => player.IsBackgroundVisible);
         }
 
         /// <summary>
@@ -335,8 +359,13 @@ namespace osu.Game.Tests.Visual.Background
 
         private class LoadBlockingTestPlayer : TestPlayer
         {
-            protected override BackgroundScreen CreateBackground() =>
-                new FadeAccessibleBackground(Beatmap.Value);
+            private FadeAccessibleBackground background;
+
+            protected override BackgroundScreen CreateBackground()
+            {
+                background = new FadeAccessibleBackground(Beatmap.Value);
+                return background;
+            }
 
             public override void OnEntering(IScreen last)
             {
@@ -359,6 +388,7 @@ namespace osu.Game.Tests.Visual.Background
             {
             }
 
+            public bool IsBackgroundVisible => background.ContentDisplayed;
             public bool IsStoryboardVisible => DimmableStoryboard.ContentDisplayed;
 
             [BackgroundDependencyLoader]
@@ -394,6 +424,8 @@ namespace osu.Game.Tests.Visual.Background
         private class FadeAccessibleBackground : BackgroundScreenBeatmap
         {
             protected override DimmableBackground CreateFadeContainer() => dimmable = new TestDimmableBackground { RelativeSizeAxes = Axes.Both };
+
+            public bool ContentDisplayed => dimmable.ContentDisplayed;
 
             public Color4 CurrentColour => dimmable.CurrentColour;
 
