@@ -33,6 +33,7 @@ using osu.Game.Scoring;
 using osu.Game.Scoring.Legacy;
 using osu.Game.Screens.Ranking;
 using osu.Game.Skinning;
+using osu.Game.Storyboards.Drawables;
 using osu.Game.Users;
 
 namespace osu.Game.Screens.Play
@@ -120,6 +121,8 @@ namespace osu.Game.Screens.Play
         protected GameplayClockContainer GameplayClockContainer { get; private set; }
 
         public DimmableStoryboard DimmableStoryboard { get; private set; }
+
+        private DrawableStoryboard drawableStoryboard;
 
         [Cached]
         [Cached(Type = typeof(IBindable<IReadOnlyList<Mod>>))]
@@ -283,12 +286,6 @@ namespace osu.Game.Screens.Play
                 ScoreProcessor.RevertResult(r);
             };
 
-            DimmableStoryboard.HasStoryboardEnded.ValueChanged += storyboardEnded =>
-            {
-                if (storyboardEnded.NewValue && ScoreProcessor.HasCompleted.Value)
-                    scheduleCompletion();
-            };
-
             // Bind the judgement processors to ourselves
             ScoreProcessor.HasCompleted.ValueChanged += updateCompletionState;
             HealthProcessor.Failed += onFail;
@@ -305,8 +302,26 @@ namespace osu.Game.Screens.Play
 
         protected virtual GameplayClockContainer CreateGameplayClockContainer(WorkingBeatmap beatmap, double gameplayStart) => new GameplayClockContainer(beatmap, gameplayStart);
 
-        private Drawable createUnderlayComponents() =>
-            DimmableStoryboard = new DimmableStoryboard(Beatmap.Value.Storyboard) { RelativeSizeAxes = Axes.Both };
+        private Drawable createUnderlayComponents()
+        {
+            DimmableStoryboard = new DimmableStoryboard(Beatmap.Value.Storyboard)
+            {
+                RelativeSizeAxes = Axes.Both,
+            };
+
+            DimmableStoryboard.StoryboardCreated += storyboard =>
+            {
+                storyboard.HasStoryboardEnded.ValueChanged += storyboardEnded =>
+                {
+                    if (storyboardEnded.NewValue && ScoreProcessor.HasCompleted.Value)
+                        scheduleCompletion();
+                };
+
+                drawableStoryboard = storyboard;
+            };
+
+            return DimmableStoryboard;
+        }
 
         private Drawable createGameplayComponents(WorkingBeatmap working, IBeatmap playableBeatmap) => new ScalingContainer(ScalingMode.Gameplay)
         {
@@ -631,7 +646,7 @@ namespace osu.Game.Screens.Play
                 return score.ScoreInfo;
             });
 
-            var storyboardHasOutro = DimmableStoryboard.ContentDisplayed && !DimmableStoryboard.HasStoryboardEnded.Value;
+            var storyboardHasOutro = DimmableStoryboard.ContentDisplayed && !drawableStoryboard.HasStoryboardEnded.Value;
 
             if (storyboardHasOutro)
             {
