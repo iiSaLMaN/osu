@@ -81,25 +81,17 @@ namespace osu.Game.Rulesets.Osu.Objects.Drawables
 
         protected override void UpdateHitStateTransforms(ArmedState state)
         {
-            base.UpdateHitStateTransforms(state);
-
             Debug.Assert(HitObject.HitWindows != null);
+
+            // todo: temporary / arbitrary, used for lifetime optimisation.
+            this.Delay(800).FadeOut();
 
             (circlePiece.Drawable as IMainCirclePiece)?.Animate(state);
 
             switch (state)
             {
-                case ArmedState.Idle:
-                    this.Delay(HitObject.TimePreempt).FadeOut(500);
-                    break;
-
                 case ArmedState.Miss:
                     this.FadeOut(100);
-                    break;
-
-                case ArmedState.Hit:
-                    // todo: temporary / arbitrary
-                    this.Delay(800).FadeOut();
                     break;
             }
         }
