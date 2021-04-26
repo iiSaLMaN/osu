@@ -175,6 +175,9 @@ namespace osu.Game.Rulesets.Osu.Objects.Drawables
             ApproachCircle.FadeOut(50);
         }
 
+        /// <remarks>
+        /// This logic is copied to <see cref="DrawableSliderTail"/> for simplicity of sharing same animation.
+        /// </remarks>
         protected override void UpdateHitStateTransforms(ArmedState state)
         {
             Debug.Assert(HitObject.HitWindows != null);

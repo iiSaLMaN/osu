@@ -79,6 +79,9 @@ namespace osu.Game.Rulesets.Osu.Objects.Drawables
             circlePiece.FadeInFromZero(HitObject.TimeFadeIn);
         }
 
+        /// <remarks>
+        /// This logic is copied from <see cref="DrawableHitCircle"/> into here for simplicity of sharing same animation.
+        /// </remarks>
         protected override void UpdateHitStateTransforms(ArmedState state)
         {
             Debug.Assert(HitObject.HitWindows != null);
