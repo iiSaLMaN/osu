@@ -11,15 +11,11 @@ using osu.Game.Graphics.Cursor;
 
 namespace osu.Game.Skinning.Editor
 {
-    public class SkinEditor : FocusedOverlayContainer
+    public class SkinEditor : CompositeDrawable
     {
-        public const double TRANSITION_DURATION = 500;
-
         private readonly Drawable target;
 
         private OsuTextFlowContainer headerText;
-
-        protected override bool StartHidden => true;
 
         public SkinEditor(Drawable target)
         {
@@ -65,15 +61,5 @@ namespace osu.Game.Skinning.Editor
         protected override bool OnHover(HoverEvent e) => true;
 
         protected override bool OnMouseDown(MouseDownEvent e) => true;
-
-        protected override void PopIn()
-        {
-            this.FadeIn(TRANSITION_DURATION, Easing.OutQuint);
-        }
-
-        protected override void PopOut()
-        {
-            this.FadeOut(TRANSITION_DURATION, Easing.OutQuint);
-        }
     }
 }
