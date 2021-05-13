@@ -320,6 +320,38 @@ namespace osu.Game.Skinning
             return null;
         }
 
+        protected override SkinnableTargetWrapper GetDefaultSkinComponents(SkinnableTarget target)
+        {
+            switch (target)
+            {
+                case SkinnableTarget.MainHUDComponents:
+                    var skinnableTargetWrapper = new SkinnableTargetWrapper(container =>
+                    {
+                        var score = container.OfType<LegacyScoreCounter>().FirstOrDefault();
+                        var accuracy = container.OfType<GameplayAccuracyCounter>().FirstOrDefault();
+
+                        if (score != null && accuracy != null)
+                        {
+                            accuracy.Y = container.ToLocalSpace(score.ScreenSpaceDrawQuad.BottomRight).Y;
+                        }
+                    })
+                    {
+                        Children = new[]
+                        {
+                            // TODO: these should fallback to the osu!classic skin.
+                            GetDrawableComponent(new HUDSkinComponent(HUDSkinComponents.ComboCounter)) ?? new DefaultComboCounter(),
+                            GetDrawableComponent(new HUDSkinComponent(HUDSkinComponents.ScoreCounter)) ?? new DefaultScoreCounter(),
+                            GetDrawableComponent(new HUDSkinComponent(HUDSkinComponents.AccuracyCounter)) ?? new DefaultAccuracyCounter(),
+                            GetDrawableComponent(new HUDSkinComponent(HUDSkinComponents.HealthDisplay)) ?? new DefaultHealthDisplay(),
+                        }
+                    };
+
+                    return skinnableTargetWrapper;
+            }
+
+            return null;
+        }
+
         public override Drawable GetDrawableComponent(ISkinComponent component)
         {
             if (base.GetDrawableComponent(component) is Drawable c)
@@ -327,37 +359,6 @@ namespace osu.Game.Skinning
 
             switch (component)
             {
-                case SkinnableTargetComponent target:
-                    switch (target.Target)
-                    {
-                        case SkinnableTarget.MainHUDComponents:
-
-                            var skinnableTargetWrapper = new SkinnableTargetWrapper(container =>
-                            {
-                                var score = container.OfType<LegacyScoreCounter>().FirstOrDefault();
-                                var accuracy = container.OfType<GameplayAccuracyCounter>().FirstOrDefault();
-
-                                if (score != null && accuracy != null)
-                                {
-                                    accuracy.Y = container.ToLocalSpace(score.ScreenSpaceDrawQuad.BottomRight).Y;
-                                }
-                            })
-                            {
-                                Children = new[]
-                                {
-                                    // TODO: these should fallback to the osu!classic skin.
-                                    GetDrawableComponent(new HUDSkinComponent(HUDSkinComponents.ComboCounter)) ?? new DefaultComboCounter(),
-                                    GetDrawableComponent(new HUDSkinComponent(HUDSkinComponents.ScoreCounter)) ?? new DefaultScoreCounter(),
-                                    GetDrawableComponent(new HUDSkinComponent(HUDSkinComponents.AccuracyCounter)) ?? new DefaultAccuracyCounter(),
-                                    GetDrawableComponent(new HUDSkinComponent(HUDSkinComponents.HealthDisplay)) ?? new DefaultHealthDisplay(),
-                                }
-                            };
-
-                            return skinnableTargetWrapper;
-                    }
-
-                    return null;
-
                 case HUDSkinComponent hudComponent:
                 {
                     if (!this.HasFont(LegacyFont.Score))

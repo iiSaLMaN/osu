@@ -36,67 +36,7 @@ namespace osu.Game.Skinning
 
         public override ISample GetSample(ISampleInfo sampleInfo) => null;
 
-        public override Drawable GetDrawableComponent(ISkinComponent component)
-        {
-            if (base.GetDrawableComponent(component) is Drawable c)
-                return c;
-
-            switch (component)
-            {
-                case SkinnableTargetComponent target:
-                    switch (target.Target)
-                    {
-                        case SkinnableTarget.MainHUDComponents:
-                            var skinnableTargetWrapper = new SkinnableTargetWrapper(container =>
-                            {
-                                var score = container.OfType<DefaultScoreCounter>().FirstOrDefault();
-                                var accuracy = container.OfType<DefaultAccuracyCounter>().FirstOrDefault();
-                                var combo = container.OfType<DefaultComboCounter>().FirstOrDefault();
-
-                                if (score != null)
-                                {
-                                    score.Anchor = Anchor.TopCentre;
-                                    score.Origin = Anchor.TopCentre;
-
-                                    // elements default to beneath the health bar
-                                    const float vertical_offset = 30;
-
-                                    const float horizontal_padding = 20;
-
-                                    score.Position = new Vector2(0, vertical_offset);
-
-                                    if (accuracy != null)
-                                    {
-                                        accuracy.Position = new Vector2(-accuracy.ScreenSpaceDeltaToParentSpace(score.ScreenSpaceDrawQuad.Size).X / 2 - horizontal_padding, vertical_offset + 5);
-                                        accuracy.Origin = Anchor.TopRight;
-                                        accuracy.Anchor = Anchor.TopCentre;
-                                    }
-
-                                    if (combo != null)
-                                    {
-                                        combo.Position = new Vector2(accuracy.ScreenSpaceDeltaToParentSpace(score.ScreenSpaceDrawQuad.Size).X / 2 + horizontal_padding, vertical_offset + 5);
-                                        combo.Anchor = Anchor.TopCentre;
-                                    }
-                                }
-                            })
-                            {
-                                Children = new Drawable[]
-                                {
-                                    new DefaultComboCounter(),
-                                    new DefaultScoreCounter(),
-                                    new DefaultAccuracyCounter(),
-                                    new DefaultHealthDisplay(),
-                                }
-                            };
-
-                            return skinnableTargetWrapper;
-                    }
-
-                    break;
-            }
-
-            return null;
-        }
+        public override Drawable GetDrawableComponent(ISkinComponent component) => null;
 
         public override IBindable<TValue> GetConfig<TLookup, TValue>(TLookup lookup)
         {
@@ -112,6 +52,59 @@ namespace osu.Game.Skinning
                     }
 
                     break;
+            }
+
+            return null;
+        }
+
+        protected override SkinnableTargetWrapper GetDefaultSkinComponents(SkinnableTarget target)
+        {
+            switch (target)
+            {
+                case SkinnableTarget.MainHUDComponents:
+                    var skinnableTargetWrapper = new SkinnableTargetWrapper(container =>
+                    {
+                        var score = container.OfType<DefaultScoreCounter>().FirstOrDefault();
+                        var accuracy = container.OfType<DefaultAccuracyCounter>().FirstOrDefault();
+                        var combo = container.OfType<DefaultComboCounter>().FirstOrDefault();
+
+                        if (score != null)
+                        {
+                            score.Anchor = Anchor.TopCentre;
+                            score.Origin = Anchor.TopCentre;
+
+                            // elements default to beneath the health bar
+                            const float vertical_offset = 30;
+
+                            const float horizontal_padding = 20;
+
+                            score.Position = new Vector2(0, vertical_offset);
+
+                            if (accuracy != null)
+                            {
+                                accuracy.Position = new Vector2(-accuracy.ScreenSpaceDeltaToParentSpace(score.ScreenSpaceDrawQuad.Size).X / 2 - horizontal_padding, vertical_offset + 5);
+                                accuracy.Origin = Anchor.TopRight;
+                                accuracy.Anchor = Anchor.TopCentre;
+                            }
+
+                            if (combo != null)
+                            {
+                                combo.Position = new Vector2(accuracy.ScreenSpaceDeltaToParentSpace(score.ScreenSpaceDrawQuad.Size).X / 2 + horizontal_padding, vertical_offset + 5);
+                                combo.Anchor = Anchor.TopCentre;
+                            }
+                        }
+                    })
+                    {
+                        Children = new Drawable[]
+                        {
+                            new DefaultComboCounter(),
+                            new DefaultScoreCounter(),
+                            new DefaultAccuracyCounter(),
+                            new DefaultHealthDisplay(),
+                        }
+                    };
+
+                    return skinnableTargetWrapper;
             }
 
             return null;
