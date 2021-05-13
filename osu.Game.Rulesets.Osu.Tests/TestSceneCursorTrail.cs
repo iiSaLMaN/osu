@@ -78,6 +78,8 @@ namespace osu.Game.Rulesets.Osu.Tests
                 RelativeSizeAxes = Axes.Both;
             }
 
+            public SkinnableTargetWrapper GetSkinComponents(SkinnableTarget target) => null;
+
             public Drawable GetDrawableComponent(ISkinComponent component) => null;
 
             public Texture GetTexture(string componentName, WrapMode wrapModeS, WrapMode wrapModeT)

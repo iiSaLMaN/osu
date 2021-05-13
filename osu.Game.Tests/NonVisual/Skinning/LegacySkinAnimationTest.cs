@@ -58,6 +58,7 @@ namespace osu.Game.Tests.NonVisual.Skinning
                 return lookup_names.Contains(componentName) ? Texture.WhitePixel : null;
             }
 
+            public SkinnableTargetWrapper GetSkinComponents(SkinnableTarget target) => throw new NotSupportedException();
             public Drawable GetDrawableComponent(ISkinComponent component) => throw new NotSupportedException();
             public ISample GetSample(ISampleInfo sampleInfo) => throw new NotSupportedException();
             public IBindable<TValue> GetConfig<TLookup, TValue>(TLookup lookup) => throw new NotSupportedException();

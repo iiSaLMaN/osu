@@ -110,6 +110,7 @@ namespace osu.Game.Rulesets.Osu.Tests
 
         private class TopLeftCursorSkin : ISkin
         {
+            public SkinnableTargetWrapper GetSkinComponents(SkinnableTarget target) => null;
             public Drawable GetDrawableComponent(ISkinComponent component) => null;
             public Texture GetTexture(string componentName, WrapMode wrapModeS, WrapMode wrapModeT) => null;
             public ISample GetSample(ISampleInfo sampleInfo) => null;

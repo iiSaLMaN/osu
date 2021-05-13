@@ -146,6 +146,8 @@ namespace osu.Game.Rulesets.Osu.Tests
                 this.identifier = identifier;
             }
 
+            public SkinnableTargetWrapper GetSkinComponents(SkinnableTarget target) => throw new NotImplementedException();
+
             public Drawable GetDrawableComponent(ISkinComponent component)
             {
                 if (!enabled) return null;

@@ -27,6 +27,8 @@ namespace osu.Game.Skinning
             Source = source;
         }
 
+        SkinnableTargetWrapper ISkin.GetSkinComponents(SkinnableTarget target) => null;
+
         public abstract Drawable GetDrawableComponent(ISkinComponent component);
 
         public Texture GetTexture(string componentName) => GetTexture(componentName, default, default);

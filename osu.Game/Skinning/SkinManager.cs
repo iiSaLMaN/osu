@@ -210,6 +210,8 @@ namespace osu.Game.Skinning
 
         public event Action SourceChanged;
 
+        public SkinnableTargetWrapper GetSkinComponents(SkinnableTarget target) => CurrentSkin.Value.GetSkinComponents(target);
+
         public Drawable GetDrawableComponent(ISkinComponent component) => CurrentSkin.Value.GetDrawableComponent(component);
 
         public Texture GetTexture(string componentName, WrapMode wrapModeS, WrapMode wrapModeT) => CurrentSkin.Value.GetTexture(componentName, wrapModeS, wrapModeT);

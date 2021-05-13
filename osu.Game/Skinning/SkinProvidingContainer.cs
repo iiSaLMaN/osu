@@ -24,6 +24,8 @@ namespace osu.Game.Skinning
 
         private ISkinSource fallbackSource;
 
+        protected virtual bool AllowComponentLookup(SkinnableTarget target) => true;
+
         protected virtual bool AllowDrawableLookup(ISkinComponent component) => true;
 
         protected virtual bool AllowTextureLookup(string componentName) => true;
@@ -39,6 +41,15 @@ namespace osu.Game.Skinning
             this.skin = skin;
 
             RelativeSizeAxes = Axes.Both;
+        }
+
+        public SkinnableTargetWrapper GetSkinComponents(SkinnableTarget target)
+        {
+            SkinnableTargetWrapper sourceComponents;
+            if (AllowComponentLookup(target) && (sourceComponents = skin?.GetSkinComponents(target)) != null)
+                return sourceComponents;
+
+            return fallbackSource?.GetSkinComponents(target);
         }
 
         public Drawable GetDrawableComponent(ISkinComponent component)

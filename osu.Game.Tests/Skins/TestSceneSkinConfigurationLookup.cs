@@ -215,6 +215,8 @@ namespace osu.Game.Tests.Skins
                 this.skin = skin;
             }
 
+            public SkinnableTargetWrapper GetSkinComponents(SkinnableTarget target) => skin.GetSkinComponents(target);
+
             public Drawable GetDrawableComponent(ISkinComponent component) => skin.GetDrawableComponent(component);
 
             public Texture GetTexture(string componentName, WrapMode wrapModeS, WrapMode wrapModeT) => skin.GetTexture(componentName, wrapModeS, wrapModeT);
