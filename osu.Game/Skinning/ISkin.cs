@@ -17,6 +17,13 @@ namespace osu.Game.Skinning
     public interface ISkin
     {
         /// <summary>
+        /// Retrieve the skin drawable components for a given <paramref name="target"/>
+        /// </summary>
+        /// <param name="target">The skinnable target to retrieve the components for.</param>
+        /// <returns>A <see cref="SkinnableTargetWrapper"/> wrapping the skin components, or null if unavailable.</returns>
+        SkinnableTargetWrapper GetSkinComponents(SkinnableTarget target);
+
+        /// <summary>
         /// Retrieve a <see cref="Drawable"/> component implementation.
         /// </summary>
         /// <param name="component">The requested component.</param>

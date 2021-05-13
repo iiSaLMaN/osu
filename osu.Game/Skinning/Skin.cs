@@ -79,22 +79,25 @@ namespace osu.Game.Skinning
             DrawableComponentInfo[targetContainer.Target] = targetContainer.CreateSkinnableInfo().ToArray();
         }
 
-        public virtual Drawable GetDrawableComponent(ISkinComponent component)
+        public SkinnableTargetWrapper GetSkinComponents(SkinnableTarget target)
         {
-            switch (component)
+            if (!DrawableComponentInfo.TryGetValue(target, out var skinnableInfo))
+                return GetDefaultSkinComponents(target);
+
+            return new SkinnableTargetWrapper
             {
-                case SkinnableTargetComponent target:
-                    if (!DrawableComponentInfo.TryGetValue(target.Target, out var skinnableInfo))
-                        return null;
-
-                    return new SkinnableTargetWrapper
-                    {
-                        ChildrenEnumerable = skinnableInfo.Select(i => i.CreateInstance())
-                    };
-            }
-
-            return null;
+                ChildrenEnumerable = skinnableInfo.Select(i => i.CreateInstance())
+            };
         }
+
+        /// <summary>
+        /// Returns the default components of this skin for a given <paramref name="target"/>.
+        /// </summary>
+        /// <param name="target">The skinnable target to return the default components.</param>
+        /// <returns>A <see cref="SkinnableTargetWrapper"/> wrapping the default components, or null if unavailable.</returns>
+        protected abstract SkinnableTargetWrapper GetDefaultSkinComponents(SkinnableTarget target);
+
+        public virtual Drawable GetDrawableComponent(ISkinComponent component) => null;
 
         #region Disposal
 
