@@ -34,7 +34,7 @@ namespace osu.Game.Skinning
             ClearInternal();
             components.Clear();
 
-            content = CurrentSkin.GetDrawableComponent(new SkinnableTargetComponent(Target)) as SkinnableTargetWrapper;
+            content = CurrentSkin.GetSkinComponents(Target);
 
             if (content != null)
             {
