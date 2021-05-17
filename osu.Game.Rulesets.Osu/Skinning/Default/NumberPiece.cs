@@ -7,14 +7,13 @@ using osu.Framework.Graphics.Containers;
 using osu.Framework.Graphics.Effects;
 using osu.Game.Graphics;
 using osu.Game.Graphics.Sprites;
-using osu.Game.Skinning;
 using osuTK.Graphics;
 
 namespace osu.Game.Rulesets.Osu.Skinning.Default
 {
     public class NumberPiece : Container
     {
-        private readonly SkinnableSpriteText number;
+        private readonly OsuSpriteText number;
 
         public string Text
         {
@@ -39,14 +38,14 @@ namespace osu.Game.Rulesets.Osu.Skinning.Default
                         Colour = Color4.White.Opacity(0.5f),
                     },
                 },
-                number = new SkinnableSpriteText(new OsuSkinComponent(OsuSkinComponents.HitCircleText), _ => new OsuSpriteText
+                number = new OsuSpriteText
                 {
+                    Anchor = Anchor.Centre,
+                    Origin = Anchor.Centre,
                     Font = OsuFont.Numeric.With(size: 40),
                     UseFullGlyphHeight = false,
-                }, confineMode: ConfineMode.NoScaling)
-                {
                     Text = @"1"
-                }
+                },
             };
         }
     }

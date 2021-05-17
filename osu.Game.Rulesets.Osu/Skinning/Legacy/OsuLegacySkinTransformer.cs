@@ -5,7 +5,6 @@ using System;
 using osu.Framework.Bindables;
 using osu.Framework.Graphics;
 using osu.Game.Skinning;
-using osuTK;
 
 namespace osu.Game.Rulesets.Osu.Skinning.Legacy
 {
@@ -95,16 +94,6 @@ namespace osu.Game.Rulesets.Osu.Skinning.Legacy
                         return new LegacyCursorTrail();
 
                     return null;
-
-                case OsuSkinComponents.HitCircleText:
-                    if (!this.HasFont(LegacyFont.HitCircle))
-                        return null;
-
-                    return new LegacySpriteText(LegacyFont.HitCircle)
-                    {
-                        // stable applies a blanket 0.8x scale to hitcircle fonts
-                        Scale = new Vector2(0.8f),
-                    };
 
                 case OsuSkinComponents.SpinnerBody:
                     bool hasBackground = Source.GetTexture("spinner-background") != null;
