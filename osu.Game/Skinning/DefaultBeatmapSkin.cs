@@ -12,6 +12,12 @@ using osu.Game.IO;
 
 namespace osu.Game.Skinning
 {
+    /// <summary>
+    /// The default skin for a beatmap.
+    /// </summary>
+    /// <remarks>
+    /// This doesn't yet have any implementation so it always returns null and falls back to the currently selected skin.
+    /// </remarks>
     public class DefaultBeatmapSkin : DefaultSkin, IBeatmapSkin
     {
         public DefaultBeatmapSkin(BeatmapInfo beatmapInfo, IStorageResourceProvider resources)
