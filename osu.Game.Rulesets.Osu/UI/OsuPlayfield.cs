@@ -38,6 +38,9 @@ namespace osu.Game.Rulesets.Osu.UI
 
         private readonly IDictionary<HitResult, DrawablePool<DrawableOsuJudgement>> poolDictionary = new Dictionary<HitResult, DrawablePool<DrawableOsuJudgement>>();
 
+        private readonly DrawablePool<DrawableSpinnerJudgement> spinnerJudgementPool;
+
+        private readonly Container judgementBelowSpinnerLayer;
         private readonly Container judgementAboveHitObjectLayer;
 
         public OsuPlayfield()
@@ -48,6 +51,7 @@ namespace osu.Game.Rulesets.Osu.UI
             InternalChildren = new Drawable[]
             {
                 playfieldBorder = new PlayfieldBorder { RelativeSizeAxes = Axes.Both },
+                judgementBelowSpinnerLayer = new Container { RelativeSizeAxes = Axes.Both },
                 spinnerProxies = new ProxyContainer { RelativeSizeAxes = Axes.Both },
                 followPoints = new FollowPointRenderer { RelativeSizeAxes = Axes.Both },
                 judgementLayer = new JudgementContainer<DrawableOsuJudgement> { RelativeSizeAxes = Axes.Both },
@@ -63,6 +67,8 @@ namespace osu.Game.Rulesets.Osu.UI
                 poolDictionary.Add(result, new DrawableJudgementPool(result, onJudgementLoaded));
 
             AddRangeInternal(poolDictionary.Values);
+
+            AddInternal(spinnerJudgementPool = new DrawablePool<DrawableSpinnerJudgement>(2));
 
             NewResult += onNewResult;
         }
@@ -150,6 +156,13 @@ namespace osu.Game.Rulesets.Osu.UI
             DrawableOsuJudgement explosion = poolDictionary[result.Type].Get(doj => doj.Apply(result, judgedObject));
 
             judgementLayer.Add(explosion);
+
+            if (judgedObject is DrawableSpinner && result.IsHit)
+            {
+                DrawableSpinnerJudgement spinnerExplosion = spinnerJudgementPool.Get(dsj => dsj.Apply(result));
+
+                judgementBelowSpinnerLayer.Add(spinnerExplosion);
+            }
         }
 
         public override bool ReceivePositionalInputAt(Vector2 screenSpacePos) => HitObjectContainer.ReceivePositionalInputAt(screenSpacePos);
