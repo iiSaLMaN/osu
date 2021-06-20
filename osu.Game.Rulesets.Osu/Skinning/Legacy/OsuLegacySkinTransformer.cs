@@ -6,6 +6,7 @@ using osu.Framework.Bindables;
 using osu.Framework.Graphics;
 using osu.Game.Skinning;
 using osuTK;
+using static osu.Game.Skinning.LegacySkinConfiguration;
 
 namespace osu.Game.Rulesets.Osu.Skinning.Legacy
 {
@@ -119,6 +120,14 @@ namespace osu.Game.Rulesets.Osu.Skinning.Legacy
                             return new LegacyNewStyleSpinner();
                         else if (hasBackground)
                             return new LegacyOldStyleSpinner();
+
+                        return null;
+
+                    case OsuSkinComponents.SpinnerJudgement:
+                        var version = Source.GetConfig<LegacySetting, decimal>(LegacySetting.Version)?.Value ?? 1.0m;
+
+                        if (version == 1.0m && Source.GetTexture("spinner-osu") != null)
+                            return new LegacySpinnerJudgementPiece();
 
                         return null;
                 }
