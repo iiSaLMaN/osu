@@ -11,6 +11,7 @@ using osu.Framework.Utils;
 using osu.Framework.Allocation;
 using osu.Game.Graphics;
 using osu.Framework.Graphics.Shapes;
+using osu.Framework.Localisation;
 using osuTK;
 using static osu.Game.Users.User;
 
@@ -192,7 +193,7 @@ namespace osu.Game.Overlays.Profile.Sections.Historical
             {
                 Origin = Anchor.CentreLeft,
                 RelativePositionAxes = Axes.X,
-                Text = value.ToString("MMM yyyy"),
+                Text = new LocalisableFormattable(value, "MMM yyyy"),
                 Font = OsuFont.GetFont(size: 12, weight: FontWeight.SemiBold),
                 Rotation = 45,
                 X = x
