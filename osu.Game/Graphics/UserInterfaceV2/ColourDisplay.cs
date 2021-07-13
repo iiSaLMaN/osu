@@ -1,7 +1,6 @@
 // Copyright (c) ppy Pty Ltd <contact@ppy.sh>. Licensed under the MIT Licence.
 // See the LICENCE file in the repository root for full licence text.
 
-using osu.Framework.Allocation;
 using osu.Framework.Bindables;
 using osu.Framework.Extensions.Color4Extensions;
 using osu.Framework.Graphics;
@@ -20,11 +19,13 @@ namespace osu.Game.Graphics.UserInterfaceV2
     /// </summary>
     public class ColourDisplay : CompositeDrawable, IHasCurrentValue<Color4>
     {
-        private readonly BindableWithCurrent<Color4> current = new BindableWithCurrent<Color4>();
+        private readonly CircularContainer circleContainer;
 
-        private Box fill;
-        private OsuSpriteText colourHexCode;
-        private OsuSpriteText colourName;
+        private readonly Box fill;
+        private readonly OsuSpriteText colourHexCode;
+        private readonly OsuSpriteText colourName;
+
+        private readonly BindableWithCurrent<Color4> current = new BindableWithCurrent<Color4>();
 
         public Bindable<Color4> Current
         {
@@ -48,24 +49,26 @@ namespace osu.Game.Graphics.UserInterfaceV2
             }
         }
 
-        [BackgroundDependencyLoader]
-        private void load()
+        public Vector2 CircleSize
         {
-            AutoSizeAxes = Axes.Y;
-            Width = 100;
+            get => circleContainer.Size;
+            set => circleContainer.Size = value;
+        }
+
+        public ColourDisplay()
+        {
+            AutoSizeAxes = Axes.Both;
 
             InternalChild = new FillFlowContainer
             {
-                RelativeSizeAxes = Axes.X,
-                AutoSizeAxes = Axes.Y,
+                AutoSizeAxes = Axes.Both,
                 Direction = FillDirection.Vertical,
                 Spacing = new Vector2(0, 10),
                 Children = new Drawable[]
                 {
-                    new CircularContainer
+                    circleContainer = new CircularContainer
                     {
-                        RelativeSizeAxes = Axes.X,
-                        Height = 100,
+                        Size = new Vector2(100f),
                         Masking = true,
                         Children = new Drawable[]
                         {
@@ -84,7 +87,7 @@ namespace osu.Game.Graphics.UserInterfaceV2
                     colourName = new OsuSpriteText
                     {
                         Anchor = Anchor.TopCentre,
-                        Origin = Anchor.TopCentre
+                        Origin = Anchor.TopCentre,
                     }
                 }
             };
