@@ -13,6 +13,7 @@ namespace osu.Game.Overlays
 
         public static OverlayColourProvider Red { get; } = new OverlayColourProvider(OverlayColourScheme.Red);
         public static OverlayColourProvider Pink { get; } = new OverlayColourProvider(OverlayColourScheme.Pink);
+        public static OverlayColourProvider DarkOrange { get; } = new OverlayColourProvider(OverlayColourScheme.DarkOrange);
         public static OverlayColourProvider Orange { get; } = new OverlayColourProvider(OverlayColourScheme.Orange);
         public static OverlayColourProvider Lime { get; } = new OverlayColourProvider(OverlayColourScheme.Lime);
         public static OverlayColourProvider Green { get; } = new OverlayColourProvider(OverlayColourScheme.Green);
@@ -66,6 +67,9 @@ namespace osu.Game.Overlays
                 case OverlayColourScheme.Pink:
                     return 333 / 360f;
 
+                case OverlayColourScheme.DarkOrange:
+                    return 20 / 360f;
+
                 case OverlayColourScheme.Orange:
                     return 45 / 360f;
 
@@ -88,6 +92,7 @@ namespace osu.Game.Overlays
     {
         Red,
         Pink,
+        DarkOrange,
         Orange,
         Lime,
         Green,
